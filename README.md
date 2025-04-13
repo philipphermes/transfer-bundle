@@ -24,9 +24,9 @@ return [
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<transfers xmlns="https://yourdomain.com/schema/transfer"
+<transfers xmlns=""
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="https://yourdomain.com/schema/transfer src/Resources/config/schema/transfer.xsd">
+           xsi:schemaLocation="src/Resources/config/schema/transfer.xsd">
 
     <transfer name="email" type="string" description="The email of the user"/>
     <transfer name="password" type="string" description="The password of the user"/>
