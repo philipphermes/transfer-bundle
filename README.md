@@ -26,7 +26,7 @@ return [
 <?xml version="1.0" encoding="UTF-8"?>
 <transfers xmlns=""
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="src/Resources/config/schema/transfer.xsd">
+           xsi:schemaLocation="vendor/philipphermes/transfer-bundle/src/Resources/config/schema/transfer.xsd">
 
     <transfer name="email" type="string" description="The email of the user"/>
     <transfer name="password" type="string" description="The password of the user"/>
