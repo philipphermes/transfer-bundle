@@ -16,8 +16,12 @@ class PhilippHermesTransferBundle extends AbstractBundle
 {
     protected string $extensionAlias = 'transfer';
 
+    /**
+     * @inheritDoc
+     */
     public function configure(DefinitionConfigurator $definition): void
     {
+        /** @phpstan-ignore-next-line  */
         $definition->rootNode()
             ->children()
                 ->scalarNode('schema_dir')
@@ -33,11 +37,17 @@ class PhilippHermesTransferBundle extends AbstractBundle
             ->end();
     }
 
+    /**
+     *
+     * @inheritDoc
+     *
+     * @param array<array-key, mixed> $config
+     */
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        $container->setParameter('transfer.namespace', $config['namespace']);
-        $container->setParameter('transfer.schema_dir', $config['schema_dir']);
-        $container->setParameter('transfer.output_dir', $config['output_dir']);
+        $builder->setParameter('transfer.namespace', $config['namespace']);
+        $builder->setParameter('transfer.schema_dir', $config['schema_dir']);
+        $builder->setParameter('transfer.output_dir', $config['output_dir']);
 
         $builder
             ->register(XmlSchemaParser::class)

@@ -9,7 +9,7 @@ use ArrayObject;
 class TransferCollection
 {
     /**
-     * @var ArrayObject<Transfer>
+     * @var ArrayObject<array-key, Transfer>
      */
     protected ArrayObject $transfers;
 
@@ -19,7 +19,7 @@ class TransferCollection
     protected array $errors = [];
 
     /**
-     * @return ArrayObject<Transfer>
+     * @return ArrayObject<array-key, Transfer>
      */
     public function getTransfers(): ArrayObject
     {
@@ -27,7 +27,7 @@ class TransferCollection
     }
 
     /**
-     * @param ArrayObject<Transfer> $transfers
+     * @param ArrayObject<array-key, Transfer> $transfers
      *
      * @return $this
      */

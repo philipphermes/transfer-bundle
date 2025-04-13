@@ -15,14 +15,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 class TransferGenerateCommand extends Command
 {
     /**
-     * @param string|null $name
      * @param XmlSchemaParser $parser
      * @param TransferGenerator $generator
+     * @param string|null $name
      */
     public function __construct(
-        ?string $name = 'transfer:generate',
         protected readonly XmlSchemaParser $parser,
         protected readonly TransferGenerator $generator,
+        ?string $name = 'transfer:generate',
     )
     {
         parent::__construct($name);

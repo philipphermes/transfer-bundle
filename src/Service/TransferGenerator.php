@@ -118,8 +118,8 @@ class TransferGenerator
         if ($this->isArrayType($type)) {
             $elementType = rtrim($type, '[]');
             return $this->isScalar($elementType)
-                ? "array<{$this->normalizeScalar($elementType)}>"
-                : "ArrayObject<{$elementType}>";
+                ? "array<array-key, {$this->normalizeScalar($elementType)}>"
+                : "ArrayObject<array-key, {$elementType}>";
         }
 
         return match (strtolower($type)) {
