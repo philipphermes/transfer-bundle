@@ -1,7 +1,7 @@
 {
   "name": "philipphermes/transfer-bundle",
   "type": "symfony-bundle",
-  "description": "generated transfers from xml schema",
+  "description": "generates transfers from xml",
   "keywords": ["transfer", "dto", "generator"],
   "readme": "/README.md",
   "license": "MIT",

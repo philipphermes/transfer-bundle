@@ -1,9 +1,13 @@
-# Transfer Generator Bundle
+# Transfer Bundle
 
 ### Requirements:
 * php: >= 8.3
 
 ## Usage:
+
+```shell
+composer require philipphermes/transfer-bundle
+```
 
 ### Configuration:
 
