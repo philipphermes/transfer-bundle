@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../src/Resources/schema/transfer.xsd">
+
+    <transfer name="User">
+        <property name="email" type="string"/>
+        <property name="password" type="string"/>
+        <property name="addresses" type="Address[]" singular="address" isNullable="true"/>
+        <property name="roles" type="string[]" description="List of roles" isNullable="false"/>
+    </transfer>
+</transfers>

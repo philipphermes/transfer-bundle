@@ -25,10 +25,10 @@ class PhilippHermesTransferBundle extends AbstractBundle
         $definition->rootNode()
             ->children()
                 ->scalarNode('schema_dir')
-                    ->defaultValue(['%kernel.project_dir%/transfers'])
+                    ->defaultValue('%kernel.project_dir%/transfers')
                 ->end()
                 ->scalarNode('output_dir')
-                    ->defaultValue(['%kernel.project_dir%/src/Generated/Transfers'])
+                    ->defaultValue('%kernel.project_dir%/src/Generated/Transfers')
                 ->end()
                 ->scalarNode('namespace')
                     ->defaultValue('App\\Generated\\Transfers')
@@ -64,6 +64,8 @@ class PhilippHermesTransferBundle extends AbstractBundle
 
         $builder
             ->register(TransferGenerateCommand::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
             ->addTag('console.command');
     }
 }

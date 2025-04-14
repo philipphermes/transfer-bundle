@@ -45,6 +45,10 @@ class TransferCollection
      */
     public function addTransfer(Transfer $transfer): self
     {
+        if (!isset($this->transfers)) {
+            $this->transfers = new ArrayObject();
+        }
+
         $this->transfers->append($transfer);
 
         return $this;

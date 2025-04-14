@@ -4,17 +4,16 @@ declare(strict_types = 1);
 
 namespace PhilippHermes\TransferBundle\Transfer;
 
+use ArrayObject;
+
 class Transfer
 {
     protected string $name;
 
-    protected ?string $singular;
-
-    protected string $type;
-
-    protected ?string $description;
-
-    protected bool $isNullable;
+    /**
+     * @var ArrayObject<array-key, Property>
+     */
+    protected ArrayObject $properties;
 
     /**
      * @return string
@@ -37,81 +36,37 @@ class Transfer
     }
 
     /**
-     * @return string|null
+     * @return ArrayObject<array-key, Property>
      */
-    public function getSingular(): ?string
+    public function getProperties(): ArrayObject
     {
-        return $this->singular;
+        return $this->properties;
     }
 
     /**
-     * @param string|null $singular
+     * @param ArrayObject<array-key, Transfer> $properties
      *
      * @return $this
      */
-    public function setSingular(?string $singular): self
+    public function setProperties(ArrayObject $properties): self
     {
-        $this->singular = $singular;
+        $this->properties = $properties;
 
         return $this;
     }
 
     /**
-     * @return string
-     */
-    public function getType(): string
-    {
-        return $this->type;
-    }
-
-    /**
-     * @param string $type
+     * @param Property $property
      *
      * @return $this
      */
-    public function setType(string $type): self
+    public function addProperty(Property $property): self
     {
-        $this->type = $type;
+        if (!isset($this->properties)) {
+            $this->properties = new ArrayObject();
+        }
 
-        return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    /**
-     * @param string|null $description
-     *
-     * @return $this
-     */
-    public function setDescription(?string $description): self
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getIsNullable(): bool
-    {
-        return $this->isNullable;
-    }
-
-    /**
-     * @param bool $isNullable
-     *
-     * @return $this
-     */
-    public function setIsNullable(bool $isNullable): self
-    {
-        $this->isNullable = $isNullable;
+        $this->properties->append($property);
 
         return $this;
     }

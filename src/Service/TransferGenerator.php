@@ -29,46 +29,98 @@ class TransferGenerator
     {
         $className = $transfer->getName();
         $namespace = $this->namespace;
-        $propertyName = lcfirst($transfer->getSingular() ?? $transfer->getName());
-
-        $type = $transfer->getType();
-        $isNullable = $transfer->getIsNullable();
-
-        $phpType = $this->getPhpType($type);
-        $docType = $this->getDocType($type);
 
         $code = "<?php\n\n";
+        $code .= "declare(strict_types = 1);\n\n";
         $code .= "namespace $namespace;\n\n";
-        if (str_contains($docType, 'ArrayObject')) {
+
+        $usesArrayObject = false;
+        foreach ($transfer->getProperties() as $property) {
+            if ($this->isObjectArrayType($property->getType())) {
+                $usesArrayObject = true;
+                break;
+            }
+        }
+        if ($usesArrayObject) {
             $code .= "use ArrayObject;\n\n";
         }
 
-        $code .= "/**\n";
-        if ($desc = $transfer->getDescription()) {
-            $code .= " * {$desc}\n";
-        }
-        $code .= " */\n";
         $code .= "class $className\n{\n";
 
-        // PHPDoc and property
-        $code .= "    /**\n";
-        $code .= "     * @var $docType\n";
-        $code .= "     */\n";
-        $code .= "    public " . ($isNullable ? '?' : '') . "$phpType \$$propertyName;\n\n";
+        foreach ($transfer->getProperties() as $property) {
+            $name = $property->getName();
+            $type = $property->getType();
+            $phpType = $this->getPhpType($type);
+            $docType = $this->getDocType($type);
+            $isNullable = $property->getIsNullable();
 
-        // Add method for object arrays only
-        if ($this->isObjectArrayType($type)) {
+            $code .= "    /**\n";
+            if ($property->getDescription()) {
+                $code .= "     * " . $property->getDescription() . "\n";
+                $code .= "     *\n";
+            }
+            $code .= "     * @var " . ($isNullable ? "$docType|null" : $docType) . "\n";
+            $code .= "     */\n";
+            $code .= "    protected " . ($isNullable ? '?' : '') . "$phpType \$$name;\n\n";
+        }
+
+        foreach ($transfer->getProperties() as $property) {
+            $type = $property->getType();
+            $phpType = $this->getPhpType($type);
+            $docType = $this->getDocType($type);
+            $isNullable = $property->getIsNullable();
+            $propertyName = $property->getName();
             $elementType = rtrim($type, '[]');
-            $singular = $transfer->getSingular() ?? $elementType;
-            $singularVar = lcfirst($singular);
 
-            $code .= "    public function add" . ucfirst($singular) . "($elementType \$$singularVar): void\n";
+            $singular = $property->getSingular() ?? $propertyName;
+            $singularVar = lcfirst($singular);
+            $methodName = ucfirst($propertyName);
+
+            $code .= "    /**\n";
+            $code .= "     * @return " . ($isNullable ? "$docType|null" : $docType) . "\n";
+            $code .= "     */\n";
+            $code .= "    public function get$methodName(): " . ($isNullable ? '?' : '') . "$phpType\n";
             $code .= "    {\n";
-            $code .= "        if (!\$this->{$propertyName}) {\n";
-            $code .= "            \$this->{$propertyName} = new ArrayObject();\n";
-            $code .= "        }\n";
-            $code .= "        \$this->{$propertyName}->append(\$$singularVar);\n";
-            $code .= "    }\n";
+            $code .= "        return \$this->{$propertyName};\n";
+            $code .= "    }\n\n";
+
+            $code .= "    /**\n";
+            $code .= "     * @param " . ($isNullable ? "$docType|null" : $docType) . " \$$propertyName\n";
+            $code .= "     *\n";
+            $code .= "     * @return self\n";
+            $code .= "     */\n";
+            $code .= "    public function set$methodName(" . ($isNullable ? '?' : '') . "$phpType \$$propertyName): self\n";
+            $code .= "    {\n";
+            $code .= "        \$this->{$propertyName} = \$$propertyName;\n\n";
+            $code .= "        return \$this;\n";
+            $code .= "    }\n\n";
+
+            if ($this->isObjectArrayType($type)) {
+                $code .= "    /**\n";
+                $code .= "     * @param $elementType \$$singularVar\n";
+                $code .= "     *\n";
+                $code .= "     * @return self\n";
+                $code .= "     */\n";
+                $code .= "    public function add" . ucfirst($singular) . "($elementType \$$singularVar): self\n";
+                $code .= "    {\n";
+                $code .= "        if (!\$this->{$propertyName}) {\n";
+                $code .= "            \$this->{$propertyName} = new ArrayObject();\n";
+                $code .= "        }\n";
+                $code .= "        \$this->{$propertyName}->append(\$$singularVar);\n\n";
+                $code .= "        return \$this;\n";
+                $code .= "    }\n\n";
+            } else if ($this->isArrayType($type)) {
+                $code .= "    /**\n";
+                $code .= "     * @param $elementType \$$singularVar\n";
+                $code .= "     *\n";
+                $code .= "     * @return self\n";
+                $code .= "     */\n";
+                $code .= "    public function add" . ucfirst($singular) . "($elementType \$$singularVar): self\n";
+                $code .= "    {\n";
+                $code .= "        \$this->{$propertyName}[] = \$$singularVar;\n\n";
+                $code .= "        return \$this;\n";
+                $code .= "    }\n\n";
+            }
         }
 
         $code .= "}\n";
@@ -83,7 +135,7 @@ class TransferGenerator
 
     private function isScalar(string $type): bool
     {
-        return in_array(strtolower($type), ['int', 'integer', 'string', 'bool', 'boolean', 'float', 'double', 'mixed']);
+        return in_array(strtolower($type), ['int', 'string', 'bool', 'float', 'mixed']);
     }
 
     private function isArrayType(string $type): bool
@@ -103,14 +155,7 @@ class TransferGenerator
             return $this->isScalar($elementType) ? 'array' : 'ArrayObject';
         }
 
-        return match (strtolower($type)) {
-            'int', 'integer' => 'int',
-            'string' => 'string',
-            'bool', 'boolean' => 'bool',
-            'float', 'double' => 'float',
-            'mixed' => 'mixed',
-            default => $type, // assume DTO
-        };
+        return $type;
     }
 
     private function getDocType(string $type): string
@@ -118,27 +163,10 @@ class TransferGenerator
         if ($this->isArrayType($type)) {
             $elementType = rtrim($type, '[]');
             return $this->isScalar($elementType)
-                ? "array<array-key, {$this->normalizeScalar($elementType)}>"
+                ? "array<array-key, " . strtolower($elementType) . ">"
                 : "ArrayObject<array-key, {$elementType}>";
         }
 
-        return match (strtolower($type)) {
-            'int', 'integer' => 'int',
-            'string' => 'string',
-            'bool', 'boolean' => 'bool',
-            'float', 'double' => 'float',
-            'mixed' => 'mixed',
-            default => $type,
-        };
-    }
-
-    private function normalizeScalar(string $type): string
-    {
-        return match (strtolower($type)) {
-            'int', 'integer' => 'int',
-            'bool', 'boolean' => 'bool',
-            'float', 'double' => 'float',
-            default => strtolower($type),
-        };
+        return $type;
     }
 }

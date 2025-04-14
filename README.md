@@ -24,13 +24,18 @@ return [
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<transfers xmlns=""
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="vendor/philipphermes/transfer-bundle/src/Resources/config/schema/transfer.xsd">
+<transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../vendor/philipphermes/transfer-bundle/src/Resources/schema/transfer.xsd">
 
-    <transfer name="email" type="string" description="The email of the user"/>
-    <transfer name="password" type="string" description="The password of the user"/>
-    <transfer name="addresses" type="Address[]" description="Shipping addresses" singular="address" isNullable="true"/>
-    <transfer name="roles" type="string[]" description="List of roles" isNullable="false"/>
+    <transfer name="User">
+        <property name="email" type="string" description="The email of the user"/>
+        <property name="password" type="string" description="The password of the user"/>
+        <property name="addresses" type="Address[]" description="Shipping addresses" singular="address" isNullable="true"/>
+        <property name="roles" type="string[]" description="List of roles" isNullable="false"/>
+    </transfer>
+
+    <transfer name="Address">
+        <property name="street" type="string"/>
+    </transfer>
 </transfers>
 ```

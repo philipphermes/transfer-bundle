@@ -10,6 +10,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(name: 'transfer:generate', description: 'Generate Transfers from XML schemas')]
 class TransferGenerateCommand extends Command
@@ -40,17 +41,20 @@ class TransferGenerateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $io = new SymfonyStyle($input, $output);
+        $io->title('Transfer Generator');
+
         $collection = $this->parser->parse();
 
         if ($collection->getTransfers()->count() === 0) {
-            $output->writeln("<comment>No transfers found in configured dir</comment>");
+            $io->warning('No transfers found in configured dir');
 
             return Command::FAILURE;
         }
 
         $this->generator->generate($collection);
 
-        $output->writeln("<info>✅ Transfers generated for configured dir</info>");
+        $io->success('Transfers generated for configured dir');
 
         return Command::SUCCESS;
     }

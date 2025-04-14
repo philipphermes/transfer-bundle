@@ -42,6 +42,9 @@
   "scripts": {
     "phpstan": [
       "vendor/bin/phpstan analyse -c phpstan.neon"
+    ],
+    "test": [
+      "XDEBUG_MODE=coverage vendor/bin/phpunit"
     ]
   }
 }
