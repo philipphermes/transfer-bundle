@@ -13,7 +13,7 @@ use Symfony\Component\Finder\Finder;
 class XmlSchemaParser
 {
     public function __construct(
-        protected readonly string $schemaDir,
+        public readonly string $schemaDir,
     ) {}
 
     public function parse(): TransferCollection

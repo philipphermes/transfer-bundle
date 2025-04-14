@@ -30,8 +30,13 @@ class XmlSchemaParserTest extends TestCase
 
         self::assertCount(2, $transferCollection->getTransfers());
 
-        $transfer1 = $transferCollection->getTransfers()->offsetGet(0);
-        $transfer2 = $transferCollection->getTransfers()->offsetGet(1);
+        if ($transferCollection->getTransfers()->offsetGet(0)->getName() === 'Address') {
+            $transfer1 = $transferCollection->getTransfers()->offsetGet(0);
+            $transfer2 = $transferCollection->getTransfers()->offsetGet(1);
+        } else {
+            $transfer1 = $transferCollection->getTransfers()->offsetGet(1);
+            $transfer2 = $transferCollection->getTransfers()->offsetGet(0);
+        }
 
         self::assertSame('Address', $transfer1->getName());
 

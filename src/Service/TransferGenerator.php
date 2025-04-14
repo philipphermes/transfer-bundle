@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace PhilippHermes\TransferBundle\Service;
 
-use PhilippHermes\TransferBundle\Transfer\TransferCollection;
 use PhilippHermes\TransferBundle\Transfer\Transfer;
 
 class TransferGenerator
@@ -15,17 +14,10 @@ class TransferGenerator
      */
     public function __construct(
         protected readonly string $namespace,
-        protected readonly string $outputDir,
+        public readonly string $outputDir,
     ) {}
 
-    public function generate(TransferCollection $collection): void
-    {
-        foreach ($collection->getTransfers() as $transfer) {
-            $this->generateDto($transfer);
-        }
-    }
-
-    private function generateDto(Transfer $transfer): void
+    public function generateTransfer(Transfer $transfer): void
     {
         $className = $transfer->getName();
         $namespace = $this->namespace;
@@ -45,7 +37,7 @@ class TransferGenerator
             $code .= "use ArrayObject;\n\n";
         }
 
-        $code .= "class $className\n{\n";
+        $code .= "class ". $className . "Transfer\n{\n";
 
         foreach ($transfer->getProperties() as $property) {
             $name = $property->getName();
@@ -97,7 +89,7 @@ class TransferGenerator
 
             if ($this->isObjectArrayType($type)) {
                 $code .= "    /**\n";
-                $code .= "     * @param $elementType \$$singularVar\n";
+                $code .= "     * @param " . $elementType . "Transfer \$$singularVar\n";
                 $code .= "     *\n";
                 $code .= "     * @return self\n";
                 $code .= "     */\n";
@@ -125,7 +117,7 @@ class TransferGenerator
 
         $code .= "}\n";
 
-        $filePath = $this->outputDir . "/$className.php";
+        $filePath = $this->outputDir . "/" . $className . "Transfer.php";
         if (!is_dir(dirname($filePath))) {
             mkdir(dirname($filePath), 0777, true);
         }
@@ -164,7 +156,7 @@ class TransferGenerator
             $elementType = rtrim($type, '[]');
             return $this->isScalar($elementType)
                 ? "array<array-key, " . strtolower($elementType) . ">"
-                : "ArrayObject<array-key, {$elementType}>";
+                : "ArrayObject<array-key, {$elementType}Transfer>";
         }
 
         return $type;

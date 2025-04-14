@@ -44,7 +44,7 @@ class Transfer
     }
 
     /**
-     * @param ArrayObject<array-key, Transfer> $properties
+     * @param ArrayObject<array-key, Property> $properties
      *
      * @return $this
      */

@@ -44,17 +44,23 @@ class TransferGenerateCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Transfer Generator');
 
+        $io->info(sprintf('Searching dir: %s', $this->parser->schemaDir));
+
         $collection = $this->parser->parse();
 
         if ($collection->getTransfers()->count() === 0) {
-            $io->warning('No transfers found in configured dir');
+            $io->warning(sprintf('No transfers found in dir: %s', $this->parser->schemaDir));
 
             return Command::FAILURE;
         }
 
-        $this->generator->generate($collection);
+        foreach ($collection->getTransfers() as $transfer) {
+            $io->text(sprintf('Generating transfer: %s', $transfer->getName()));
 
-        $io->success('Transfers generated for configured dir');
+            $this->generator->generateTransfer($transfer);
+        }
+
+        $io->success(sprintf('Transfers generated in dir: %s', $this->generator->outputDir));
 
         return Command::SUCCESS;
     }

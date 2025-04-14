@@ -35,8 +35,8 @@ class TransferGeneratorTest extends TestCase
     {
         parent::tearDown();
 
-        unlink(__DIR__ . '/../Data/Generated/Address.php');
-        unlink(__DIR__ . '/../Data/Generated/User.php');
+        unlink(__DIR__ . '/../Data/Generated/AddressTransfer.php');
+        unlink(__DIR__ . '/../Data/Generated/UserTransfer.php');
         rmdir(__DIR__ . '/../Data/Generated');
     }
 
@@ -47,9 +47,11 @@ class TransferGeneratorTest extends TestCase
     {
         $transferCollection = $this->xmlSchemaParser->parse();
 
-        $this->transferGenerator->generate($transferCollection);
+        foreach ($transferCollection->getTransfers() as $transfer) {
+            $this->transferGenerator->generateTransfer($transfer);
+        }
 
-        self::assertFileExists(__DIR__ . '/../Data/Generated/Address.php');
-        self::assertFileExists(__DIR__ . '/../Data/Generated/User.php');
+        self::assertFileExists(__DIR__ . '/../Data/Generated/AddressTransfer.php');
+        self::assertFileExists(__DIR__ . '/../Data/Generated/UserTransfer.php');
     }
 }
