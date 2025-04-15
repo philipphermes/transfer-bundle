@@ -27,6 +27,9 @@ return [
 * `transfer.output_dir`: `%kernel.project_dir%/src/Generated/Transfers`
 
 ### Define Transfers:
+* you can create multiple files
+* if multiple files have the same transfer they will be merged
+  * if you define the same property twice the first on it gets is taken
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
