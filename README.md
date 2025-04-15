@@ -2,6 +2,8 @@
 
 ### Requirements:
 * php: >= 8.3
+* symfony: >= 7.2
+* ext-simplexml: *
 
 ## Usage:
 

@@ -74,7 +74,7 @@ readonly class TransferGenerator implements TransferGeneratorInterface
     protected function generateProperties(TransferTransfer $transferTransfer, string $code): string
     {
         foreach ($transferTransfer->getProperties() as $property) {
-            $propertyType = $this->getPropertyType($property->getType()); //TODO validate if null
+            $propertyType = $this->getPropertyType($property->getType());
             $annotationType = $this->getPropertyAnnotationType($property->getType(), $propertyType);
 
             $code .= "    /**\n";
