@@ -48,3 +48,7 @@ return [
     </transfer>
 </transfers>
 ```
+### Run
+```shell
+symfony console transfer:generate
+```
