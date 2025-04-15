@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Transfer;
 
-class Property
+class PropertyTransfer
 {
     protected string $name;
 

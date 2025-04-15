@@ -4,8 +4,7 @@ declare(strict_types = 1);
 
 namespace PhilippHermes\TransferBundle\Command;
 
-use PhilippHermes\TransferBundle\Service\TransferGenerator;
-use PhilippHermes\TransferBundle\Service\XmlSchemaParser;
+use PhilippHermes\TransferBundle\Service\TransferServiceInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,13 +15,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class TransferGenerateCommand extends Command
 {
     /**
-     * @param XmlSchemaParser $parser
-     * @param TransferGenerator $generator
+     * @param TransferServiceInterface $transferService
      * @param string|null $name
      */
     public function __construct(
-        protected readonly XmlSchemaParser $parser,
-        protected readonly TransferGenerator $generator,
+        protected readonly TransferServiceInterface $transferService,
+        protected readonly string $schemaDir,
+        protected readonly string $outputDir,
         ?string $name = 'transfer:generate',
     )
     {
@@ -44,12 +43,12 @@ class TransferGenerateCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Transfer Generator');
 
-        $io->info(sprintf('Searching dir: %s', $this->parser->schemaDir));
+        $io->info(sprintf('Reading dir: %s', $this->schemaDir));
 
-        $collection = $this->parser->parse();
+        $collection = $this->transferService->parse();
 
         if ($collection->getTransfers()->count() === 0) {
-            $io->warning(sprintf('No transfers found in dir: %s', $this->parser->schemaDir));
+            $io->warning(sprintf('No transfers found in dir: %s', $this->schemaDir));
 
             return Command::FAILURE;
         }
@@ -57,10 +56,10 @@ class TransferGenerateCommand extends Command
         foreach ($collection->getTransfers() as $transfer) {
             $io->text(sprintf('Generating transfer: %s', $transfer->getName()));
 
-            $this->generator->generateTransfer($transfer);
+            $this->transferService->generateTransfer($transfer);
         }
 
-        $io->success(sprintf('Transfers generated in dir: %s', $this->generator->outputDir));
+        $io->success(sprintf('Transfers generated in dir: %s', $this->outputDir));
 
         return Command::SUCCESS;
     }

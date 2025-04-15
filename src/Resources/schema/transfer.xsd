@@ -2,6 +2,24 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified">
 
+    <xs:simpleType name="knownPropertyTypes">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="string"/>
+            <xs:enumeration value="int"/>
+            <xs:enumeration value="bool"/>
+            <xs:enumeration value="float"/>
+            <xs:enumeration value="array"/>
+            <xs:enumeration value="mixed"/>
+            <xs:enumeration value="DateTime"/>
+            <xs:enumeration value="DateTimeImmutable"/>
+            <xs:enumeration value="object"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="propertyTypes">
+        <xs:union memberTypes="knownPropertyTypes xs:string"/>
+    </xs:simpleType>
+
     <xs:element name="transfers">
         <xs:complexType>
             <xs:sequence>
@@ -12,7 +30,7 @@
                                 <xs:complexType>
                                     <xs:sequence/>
                                     <xs:attribute name="name" type="xs:string" use="required"/>
-                                    <xs:attribute name="type" type="xs:string" use="required"/>
+                                    <xs:attribute name="type" type="propertyTypes" use="required"/>
                                     <xs:attribute name="description" type="xs:string"/>
                                     <xs:attribute name="singular" type="xs:string"/>
                                     <xs:attribute name="isNullable" type="xs:boolean" default="false"/>

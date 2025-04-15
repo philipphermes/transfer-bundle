@@ -5,8 +5,12 @@ declare(strict_types = 1);
 namespace PhilippHermes\TransferBundle;
 
 use PhilippHermes\TransferBundle\Command\TransferGenerateCommand;
-use PhilippHermes\TransferBundle\Service\TransferGenerator;
-use PhilippHermes\TransferBundle\Service\XmlSchemaParser;
+use PhilippHermes\TransferBundle\Service\Model\TransferGenerator;
+use PhilippHermes\TransferBundle\Service\Model\TransferGeneratorInterface;
+use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParser;
+use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParserInterface;
+use PhilippHermes\TransferBundle\Service\TransferService;
+use PhilippHermes\TransferBundle\Service\TransferServiceInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -50,22 +54,25 @@ class PhilippHermesTransferBundle extends AbstractBundle
         $builder->setParameter('transfer.output_dir', $config['output_dir']);
 
         $builder
-            ->register(XmlSchemaParser::class)
-            ->setAutowired(true)
-            ->setAutoconfigured(true)
+            ->register(XmlSchemaParserInterface::class, XmlSchemaParser::class)
             ->setArgument('$schemaDir', '%transfer.schema_dir%');
 
         $builder
-            ->register(TransferGenerator::class)
-            ->setAutowired(true)
-            ->setAutoconfigured(true)
+            ->register(TransferGeneratorInterface::class, TransferGenerator::class)
             ->setArgument('$namespace', '%transfer.namespace%')
             ->setArgument('$outputDir', '%transfer.output_dir%');
+
+        $builder
+            ->register(TransferServiceInterface::class, TransferService::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true);
 
         $builder
             ->register(TransferGenerateCommand::class)
             ->setAutowired(true)
             ->setAutoconfigured(true)
-            ->addTag('console.command');
+            ->addTag('console.command')
+            ->setArgument('$schemaDir', '%transfer.schema_dir%')
+            ->setArgument('$outputDir', '%transfer.output_dir%');
     }
 }

@@ -8,4 +8,8 @@
         <property name="addresses" type="Address[]" singular="address" isNullable="true"/>
         <property name="roles" type="string[]" description="List of roles" isNullable="false"/>
     </transfer>
+
+    <transfer name="Address">
+        <property name="street" type="string"/>
+    </transfer>
 </transfers>

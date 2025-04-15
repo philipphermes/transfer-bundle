@@ -6,12 +6,12 @@ namespace PhilippHermes\TransferBundle\Transfer;
 
 use ArrayObject;
 
-class Transfer
+class TransferTransfer
 {
     protected string $name;
 
     /**
-     * @var ArrayObject<array-key, Property>
+     * @var ArrayObject<array-key, PropertyTransfer>
      */
     protected ArrayObject $properties;
 
@@ -36,15 +36,19 @@ class Transfer
     }
 
     /**
-     * @return ArrayObject<array-key, Property>
+     * @return ArrayObject<array-key, PropertyTransfer>
      */
     public function getProperties(): ArrayObject
     {
+        if (!isset($this->properties)) {
+            return new ArrayObject();
+        }
+
         return $this->properties;
     }
 
     /**
-     * @param ArrayObject<array-key, Property> $properties
+     * @param ArrayObject<array-key, PropertyTransfer> $properties
      *
      * @return $this
      */
@@ -56,11 +60,11 @@ class Transfer
     }
 
     /**
-     * @param Property $property
+     * @param PropertyTransfer $property
      *
      * @return $this
      */
-    public function addProperty(Property $property): self
+    public function addProperty(PropertyTransfer $property): self
     {
         if (!isset($this->properties)) {
             $this->properties = new ArrayObject();

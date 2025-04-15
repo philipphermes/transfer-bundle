@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Tests\Service;
 
-use PhilippHermes\TransferBundle\Service\TransferGenerator;
-use PhilippHermes\TransferBundle\Service\XmlSchemaParser;
+use PhilippHermes\TransferBundle\Service\Model\TransferGenerator;
+use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParser;
 use PHPUnit\Framework\TestCase;
 
 class TransferGeneratorTest extends TestCase
@@ -53,5 +53,31 @@ class TransferGeneratorTest extends TestCase
 
         self::assertFileExists(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         self::assertFileExists(__DIR__ . '/../Data/Generated/UserTransfer.php');
+
+        $user = new \PhilippHermes\TransferBundle\Tests\Data\Generated\UserTransfer();
+        $address = new \PhilippHermes\TransferBundle\Tests\Data\Generated\AddressTransfer();
+
+        $address->setStreet('test');
+        self::assertSame('test', $address->getStreet());
+
+        $address->setZip(123);
+        self::assertSame(123, $address->getZip());
+
+        $user->setEmail('test@example.com');
+        self::assertSame('test@example.com', $user->getEmail());
+
+        $user->setPassword('password');
+        self::assertSame('password', $user->getPassword());
+
+        $user->setAddresses(new \ArrayObject([$address]));
+        self::assertSame('test', $user->getAddresses()->offsetGet(0)->getStreet());
+        $user->addAddress($address);
+        self::assertCount(2, $user->getAddresses());
+
+        $user->setRoles(['ROLE_USER']);
+        self::assertSame(['ROLE_USER'], $user->getRoles());
+
+        $user->addRoles('ROLE_ADMIN');
+        self::assertSame(['ROLE_USER', 'ROLE_ADMIN'], $user->getRoles());
     }
 }

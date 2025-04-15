@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Tests\Service;
 
+use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParser;
 use PHPUnit\Framework\TestCase;
-use PhilippHermes\TransferBundle\Service\XmlSchemaParser;
 
 class XmlSchemaParserTest extends TestCase
 {
@@ -40,11 +40,25 @@ class XmlSchemaParserTest extends TestCase
 
         self::assertSame('Address', $transfer1->getName());
 
-        self::assertSame('street', $transfer1->getProperties()->offsetGet(0)->getName());
-        self::assertSame('string', $transfer1->getProperties()->offsetGet(0)->getType());
-        self::assertNull($transfer1->getProperties()->offsetGet(0)->getDescription());
-        self::assertNull($transfer1->getProperties()->offsetGet(0)->getSingular());
-        self::assertFalse($transfer1->getProperties()->offsetGet(0)->getIsNullable());
+        if ($transfer1->getProperties()->offsetGet(0)->getName() === 'street') {
+            $street =$transfer1->getProperties()->offsetGet(0);
+            $zip = $transfer1->getProperties()->offsetGet(1);
+        } else {
+            $street =$transfer1->getProperties()->offsetGet(1);
+            $zip = $transfer1->getProperties()->offsetGet(0);
+        }
+
+        self::assertSame('street', $street->getName());
+        self::assertSame('string', $street->getType());
+        self::assertNull($street->getDescription());
+        self::assertNull($street->getSingular());
+        self::assertFalse($street->getIsNullable());
+
+        self::assertSame('zip', $zip->getName());
+        self::assertSame('int', $zip->getType());
+        self::assertNull($zip->getDescription());
+        self::assertNull($zip->getSingular());
+        self::assertFalse($zip->getIsNullable());
 
         self::assertSame('User', $transfer2->getName());
 

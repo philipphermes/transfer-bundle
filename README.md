@@ -20,9 +20,9 @@ return [
 ```
 
 #### Optional Configs:
-* `transfer.namespace`: the namespace of the transfers (default: `App\\Generated\\Transfers`)
-* `transfer.schema_dir`: the namespace of the transfers (default: `%kernel.project_dir%/transfers`)
-* `transfer.output_dir`: the namespace of the transfers (default: `%kernel.project_dir%/src/Generated/Transfers`)
+* `transfer.namespace`: `App\\Generated\\Transfers`
+* `transfer.schema_dir`: `%kernel.project_dir%/transfers`
+* `transfer.output_dir`: `%kernel.project_dir%/src/Generated/Transfers`
 
 ### Define Transfers:
 

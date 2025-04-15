@@ -3,6 +3,6 @@
            xsi:noNamespaceSchemaLocation="../../src/Resources/schema/transfer.xsd">
 
     <transfer name="Address">
-        <property name="street" type="string"/>
+        <property name="zip" type="int"/>
     </transfer>
 </transfers>

@@ -6,10 +6,10 @@ namespace PhilippHermes\TransferBundle\Transfer;
 
 use ArrayObject;
 
-class TransferCollection
+class TransferCollectionTransfer
 {
     /**
-     * @var ArrayObject<array-key, Transfer>
+     * @var ArrayObject<array-key, TransferTransfer>
      */
     protected ArrayObject $transfers;
 
@@ -19,15 +19,19 @@ class TransferCollection
     protected array $errors = [];
 
     /**
-     * @return ArrayObject<array-key, Transfer>
+     * @return ArrayObject<array-key, TransferTransfer>
      */
     public function getTransfers(): ArrayObject
     {
+        if (!isset($this->transfers)) {
+            return new ArrayObject();
+        }
+
         return $this->transfers;
     }
 
     /**
-     * @param ArrayObject<array-key, Transfer> $transfers
+     * @param ArrayObject<array-key, TransferTransfer> $transfers
      *
      * @return $this
      */
@@ -39,11 +43,11 @@ class TransferCollection
     }
 
     /**
-     * @param Transfer $transfer
+     * @param TransferTransfer $transfer
      *
      * @return $this
      */
-    public function addTransfer(Transfer $transfer): self
+    public function addTransfer(TransferTransfer $transfer): self
     {
         if (!isset($this->transfers)) {
             $this->transfers = new ArrayObject();
