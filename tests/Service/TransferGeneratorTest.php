@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Tests\Service;
 
+use PhilippHermes\TransferBundle\Service\Model\Generate\ClassGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\GeneratorHelper;
+use PhilippHermes\TransferBundle\Service\Model\Generate\GetterGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\PropertyGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\UserGenerator;
 use PhilippHermes\TransferBundle\Service\Model\TransferGenerator;
 use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParser;
 use PHPUnit\Framework\TestCase;
@@ -21,10 +27,17 @@ class TransferGeneratorTest extends TestCase
     {
         parent::setUp();
 
+        $helper = new GeneratorHelper();
+
         $this->xmlSchemaParser = new XmlSchemaParser(__DIR__ . '/../Data');
         $this->transferGenerator = new TransferGenerator(
             'PhilippHermes\TransferBundle\Tests\Data\Generated',
-            __DIR__ . '/../Data/Generated'
+            __DIR__ . '/../Data/Generated',
+            new ClassGenerator($helper),
+            new PropertyGenerator($helper),
+            new GetterGenerator($helper),
+            new SetterGenerator($helper),
+            new UserGenerator(),
         );
     }
 
@@ -65,9 +78,15 @@ class TransferGeneratorTest extends TestCase
 
         $user->setEmail('test@example.com');
         self::assertSame('test@example.com', $user->getEmail());
+        self::assertSame('test@example.com', $user->getUserIdentifier());
 
         $user->setPassword('password');
         self::assertSame('password', $user->getPassword());
+
+        $user->setPlainPassword('password');
+        self::assertSame('password', $user->getPlainPassword());
+        $user->eraseCredentials();
+        self::assertNull($user->getPlainPassword());
 
         $user->setAddresses(new \ArrayObject([$address]));
         self::assertSame('test', $user->getAddresses()->offsetGet(0)->getStreet());
@@ -77,7 +96,7 @@ class TransferGeneratorTest extends TestCase
         $user->setRoles(['ROLE_USER']);
         self::assertSame(['ROLE_USER'], $user->getRoles());
 
-        $user->addRoles('ROLE_ADMIN');
+        $user->addRole('ROLE_ADMIN');
         self::assertSame(['ROLE_USER', 'ROLE_ADMIN'], $user->getRoles());
     }
 }

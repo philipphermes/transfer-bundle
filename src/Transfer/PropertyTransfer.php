@@ -16,6 +16,10 @@ class PropertyTransfer
 
     protected bool $isNullable;
 
+    protected bool $isIdentifier;
+
+    protected bool $isSensitive;
+
     /**
      * @return string
      */
@@ -112,6 +116,46 @@ class PropertyTransfer
     public function setIsNullable(bool $isNullable): self
     {
         $this->isNullable = $isNullable;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsIdentifier(): bool
+    {
+        return $this->isIdentifier;
+    }
+
+    /**
+     * @param bool $isIdentifier
+     *
+     * @return $this
+     */
+    public function setIsIdentifier(bool $isIdentifier): self
+    {
+        $this->isIdentifier = $isIdentifier;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsSensitive(): bool
+    {
+        return $this->isSensitive;
+    }
+
+    /**
+     * @param bool $isSensitive
+     *
+     * @return $this
+     */
+    public function setIsSensitive(bool $isSensitive): self
+    {
+        $this->isSensitive = $isSensitive;
 
         return $this;
     }

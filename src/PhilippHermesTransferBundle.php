@@ -5,6 +5,18 @@ declare(strict_types = 1);
 namespace PhilippHermes\TransferBundle;
 
 use PhilippHermes\TransferBundle\Command\TransferGenerateCommand;
+use PhilippHermes\TransferBundle\Service\Model\Generate\ClassGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\ClassGeneratorInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generate\GeneratorHelper;
+use PhilippHermes\TransferBundle\Service\Model\Generate\GeneratorHelperInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generate\GetterGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\GetterGeneratorInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generate\PropertyGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\PropertyGeneratorInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGeneratorInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generate\UserGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generate\UserGeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\TransferGenerator;
 use PhilippHermes\TransferBundle\Service\Model\TransferGeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParser;
@@ -53,12 +65,33 @@ class PhilippHermesTransferBundle extends AbstractBundle
         $builder->setParameter('transfer.schema_dir', $config['schema_dir']);
         $builder->setParameter('transfer.output_dir', $config['output_dir']);
 
+        $builder->register(GeneratorHelperInterface::class, GeneratorHelper::class);
+
+        $builder
+            ->register(ClassGeneratorInterface::class, ClassGenerator::class)
+            ->setAutowired(true);
+
+        $builder
+            ->register(PropertyGeneratorInterface::class, PropertyGenerator::class)
+            ->setAutowired(true);
+
+        $builder
+            ->register(GetterGeneratorInterface::class, GetterGenerator::class)
+            ->setAutowired(true);
+
+        $builder
+            ->register(SetterGeneratorInterface::class, SetterGenerator::class)
+            ->setAutowired(true);
+
+        $builder->register(UserGeneratorInterface::class, UserGenerator::class);
+
         $builder
             ->register(XmlSchemaParserInterface::class, XmlSchemaParser::class)
             ->setArgument('$schemaDir', '%transfer.schema_dir%');
 
         $builder
             ->register(TransferGeneratorInterface::class, TransferGenerator::class)
+            ->setAutowired(true)
             ->setArgument('$namespace', '%transfer.namespace%')
             ->setArgument('$outputDir', '%transfer.output_dir%');
 

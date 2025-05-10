@@ -20,6 +20,13 @@
         <xs:union memberTypes="knownPropertyTypes xs:string"/>
     </xs:simpleType>
 
+    <xs:simpleType name="transferTypes">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="user"/>
+            <xs:enumeration value="default"/>
+        </xs:restriction>
+    </xs:simpleType>
+
     <xs:element name="transfers">
         <xs:complexType>
             <xs:sequence>
@@ -34,10 +41,13 @@
                                     <xs:attribute name="description" type="xs:string"/>
                                     <xs:attribute name="singular" type="xs:string"/>
                                     <xs:attribute name="isNullable" type="xs:boolean" default="false"/>
+                                    <xs:attribute name="isIdentifier" type="xs:boolean" default="false"/>
+                                    <xs:attribute name="isSensitive" type="xs:boolean" default="false"/>
                                 </xs:complexType>
                             </xs:element>
                         </xs:sequence>
                         <xs:attribute name="name" type="xs:string"/>
+                        <xs:attribute name="type" type="transferTypes" default="default" use="optional"/>
                     </xs:complexType>
                 </xs:element>
             </xs:sequence>

@@ -48,6 +48,33 @@ return [
     </transfer>
 </transfers>
 ```
+#### Security Bundle Integration
+If you want to use this feature make sure you have the Security Bundle installed.
+
+```shell
+composer require symfony/security-bundle
+```
+
+Then you can define your transfer eg. like this:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../vendor/philipphermes/transfer-bundle/src/Resources/schema/transfer.xsd">
+
+  <transfer name="User" type="user">
+    <property name="email" type="string" isIdentifier="true"/>
+    <property name="password" type="string"/>
+    <property name="plainPassword" type="string" isSensitive="true" isNullable="true"/>
+  </transfer>
+</transfers>
+```
+
+it will implement the UserInterface and have all required methods like:
+* getUserIdentifier
+* eraseCredentials
+* get/set Roles
+
 ### Run
 ```shell
 symfony console transfer:generate

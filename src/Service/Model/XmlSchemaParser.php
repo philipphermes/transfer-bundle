@@ -48,6 +48,7 @@ readonly class XmlSchemaParser implements XmlSchemaParserInterface
                 if (!$transfer) {
                     $transfer = new TransferTransfer();
                     $transfer->setName((string)$transferElement['name']);
+                    $transfer->setType((string)($transferElement['type'] ?? 'default'));
                 }
 
                 foreach ($transferElement->property as $propertyElement) {
@@ -63,7 +64,9 @@ readonly class XmlSchemaParser implements XmlSchemaParserInterface
                             ->setType((string)$propertyElement['type'])
                             ->setDescription(isset($propertyElement['description']) ? (string)$propertyElement['description'] : null)
                             ->setSingular(isset($propertyElement['singular']) ? (string)$propertyElement['singular'] : null)
-                            ->setIsNullable(isset($propertyElement['isNullable']) && ((string)$propertyElement['isNullable'] === 'true'));
+                            ->setIsNullable(isset($propertyElement['isNullable']) && ((string)$propertyElement['isNullable'] === 'true'))
+                            ->setIsIdentifier(isset($propertyElement['isIdentifier']) && ((string)$propertyElement['isIdentifier'] === 'true'))
+                            ->setIsSensitive(isset($propertyElement['isSensitive']) && ((string)$propertyElement['isSensitive'] === 'true'));
 
                         $transfer->addProperty($property);
                     }

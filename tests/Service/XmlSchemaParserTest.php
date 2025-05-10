@@ -67,23 +67,31 @@ class XmlSchemaParserTest extends TestCase
         self::assertNull($transfer2->getProperties()->offsetGet(0)->getDescription());
         self::assertNull($transfer2->getProperties()->offsetGet(0)->getSingular());
         self::assertFalse($transfer2->getProperties()->offsetGet(0)->getIsNullable());
+        self::assertFalse($transfer2->getProperties()->offsetGet(0)->getIsSensitive());
+        self::assertTrue($transfer2->getProperties()->offsetGet(0)->getIsIdentifier());
 
         self::assertSame('password', $transfer2->getProperties()->offsetGet(1)->getName());
         self::assertSame('string', $transfer2->getProperties()->offsetGet(1)->getType());
         self::assertNull($transfer2->getProperties()->offsetGet(1)->getDescription());
         self::assertNull($transfer2->getProperties()->offsetGet(1)->getSingular());
         self::assertFalse($transfer2->getProperties()->offsetGet(1)->getIsNullable());
+        self::assertFalse($transfer2->getProperties()->offsetGet(1)->getIsSensitive());
+        self::assertFalse($transfer2->getProperties()->offsetGet(1)->getIsIdentifier());
 
-        self::assertSame('addresses', $transfer2->getProperties()->offsetGet(2)->getName());
-        self::assertSame('Address[]', $transfer2->getProperties()->offsetGet(2)->getType());
+        self::assertSame('plainPassword', $transfer2->getProperties()->offsetGet(2)->getName());
+        self::assertSame('string', $transfer2->getProperties()->offsetGet(2)->getType());
         self::assertNull($transfer2->getProperties()->offsetGet(2)->getDescription());
-        self::assertSame('address', $transfer2->getProperties()->offsetGet(2)->getSingular());
+        self::assertNull($transfer2->getProperties()->offsetGet(2)->getSingular());
         self::assertTrue($transfer2->getProperties()->offsetGet(2)->getIsNullable());
+        self::assertTrue($transfer2->getProperties()->offsetGet(2)->getIsSensitive());
+        self::assertFalse($transfer2->getProperties()->offsetGet(2)->getIsIdentifier());
 
-        self::assertSame('roles', $transfer2->getProperties()->offsetGet(3)->getName());
-        self::assertSame('string[]', $transfer2->getProperties()->offsetGet(3)->getType());
-        self::assertSame('List of roles', $transfer2->getProperties()->offsetGet(3)->getDescription());
-        self::assertNull($transfer2->getProperties()->offsetGet(3)->getSingular());
-        self::assertFalse($transfer2->getProperties()->offsetGet(3)->getIsNullable());
+        self::assertSame('addresses', $transfer2->getProperties()->offsetGet(3)->getName());
+        self::assertSame('Address[]', $transfer2->getProperties()->offsetGet(3)->getType());
+        self::assertNull($transfer2->getProperties()->offsetGet(3)->getDescription());
+        self::assertSame('address', $transfer2->getProperties()->offsetGet(3)->getSingular());
+        self::assertTrue($transfer2->getProperties()->offsetGet(3)->getIsNullable());
+        self::assertFalse($transfer2->getProperties()->offsetGet(3)->getIsSensitive());
+        self::assertFalse($transfer2->getProperties()->offsetGet(3)->getIsIdentifier());
     }
 }
