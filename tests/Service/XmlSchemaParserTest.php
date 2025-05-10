@@ -49,18 +49,28 @@ class XmlSchemaParserTest extends TestCase
         }
 
         self::assertSame('Address', $addressTransfer->getName());
+        self::assertCount(3, $addressTransfer->getProperties());
 
-        self::assertSame('zip', $addressTransfer->getProperties()->offsetGet(0)->getName());
-        self::assertSame('int', $addressTransfer->getProperties()->offsetGet(0)->getType());
-        self::assertNull($addressTransfer->getProperties()->offsetGet(0)->getDescription());
-        self::assertNull($addressTransfer->getProperties()->offsetGet(0)->getSingular());
-        self::assertFalse($addressTransfer->getProperties()->offsetGet(0)->getIsNullable());
-
-        self::assertSame('street', $addressTransfer->getProperties()->offsetGet(1)->getName());
-        self::assertSame('string', $addressTransfer->getProperties()->offsetGet(1)->getType());
-        self::assertNull($addressTransfer->getProperties()->offsetGet(1)->getDescription());
-        self::assertNull($addressTransfer->getProperties()->offsetGet(1)->getSingular());
-        self::assertFalse($addressTransfer->getProperties()->offsetGet(1)->getIsNullable());
+        foreach ($addressTransfer->getProperties() as $property) {
+            if ($property->getName() === 'zip') {
+                self::assertSame('int', $property->getType());
+                self::assertNull($property->getDescription());
+                self::assertNull($property->getSingular());
+                self::assertFalse($property->getIsNullable());
+            } elseif ($property->getName() === 'street') {
+                self::assertSame('string', $property->getType());
+                self::assertNull($property->getDescription());
+                self::assertNull($property->getSingular());
+                self::assertFalse($property->getIsNullable());
+            } elseif ($property->getName() === 'country') {
+                self::assertSame('Country', $property->getType());
+                self::assertNull($property->getDescription());
+                self::assertNull($property->getSingular());
+                self::assertFalse($property->getIsNullable());
+            } else {
+                self::fail('Unknown property: ' . $property->getName());
+            }
+        }
 
         self::assertSame('User', $userTransfer->getName());
 
