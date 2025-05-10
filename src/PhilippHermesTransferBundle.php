@@ -17,6 +17,8 @@ use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generate\UserGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generate\UserGeneratorInterface;
+use PhilippHermes\TransferBundle\Service\Model\TransferCleaner;
+use PhilippHermes\TransferBundle\Service\Model\TransferCleanerInterface;
 use PhilippHermes\TransferBundle\Service\Model\TransferGenerator;
 use PhilippHermes\TransferBundle\Service\Model\TransferGeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParser;
@@ -93,6 +95,10 @@ class PhilippHermesTransferBundle extends AbstractBundle
             ->register(TransferGeneratorInterface::class, TransferGenerator::class)
             ->setAutowired(true)
             ->setArgument('$namespace', '%transfer.namespace%')
+            ->setArgument('$outputDir', '%transfer.output_dir%');
+
+        $builder
+            ->register(TransferCleanerInterface::class, TransferCleaner::class)
             ->setArgument('$outputDir', '%transfer.output_dir%');
 
         $builder

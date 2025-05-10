@@ -28,70 +28,82 @@ class XmlSchemaParserTest extends TestCase
     {
         $transferCollection = $this->xmlSchemaParser->parse();
 
-        self::assertCount(2, $transferCollection->getTransfers());
+        self::assertCount(3, $transferCollection->getTransfers());
 
-        if ($transferCollection->getTransfers()->offsetGet(0)->getName() === 'Address') {
-            $transfer1 = $transferCollection->getTransfers()->offsetGet(0);
-            $transfer2 = $transferCollection->getTransfers()->offsetGet(1);
-        } else {
-            $transfer1 = $transferCollection->getTransfers()->offsetGet(1);
-            $transfer2 = $transferCollection->getTransfers()->offsetGet(0);
+        $userTransfer = null;
+        $addressTransfer = null;
+        $countryTransfer = null;
+
+        foreach ($transferCollection->getTransfers() as $transfer) {
+            if ($transfer->getName() === 'User') {
+                $userTransfer = $transfer;
+            }
+
+            if ($transfer->getName() === 'Address') {
+                $addressTransfer = $transfer;
+            }
+
+            if ($transfer->getName() === 'Country') {
+                $countryTransfer = $transfer;
+            }
         }
 
-        self::assertSame('Address', $transfer1->getName());
+        self::assertSame('Address', $addressTransfer->getName());
 
-        if ($transfer1->getProperties()->offsetGet(0)->getName() === 'street') {
-            $street =$transfer1->getProperties()->offsetGet(0);
-            $zip = $transfer1->getProperties()->offsetGet(1);
-        } else {
-            $street =$transfer1->getProperties()->offsetGet(1);
-            $zip = $transfer1->getProperties()->offsetGet(0);
-        }
+        self::assertSame('zip', $addressTransfer->getProperties()->offsetGet(0)->getName());
+        self::assertSame('int', $addressTransfer->getProperties()->offsetGet(0)->getType());
+        self::assertNull($addressTransfer->getProperties()->offsetGet(0)->getDescription());
+        self::assertNull($addressTransfer->getProperties()->offsetGet(0)->getSingular());
+        self::assertFalse($addressTransfer->getProperties()->offsetGet(0)->getIsNullable());
 
-        self::assertSame('street', $street->getName());
-        self::assertSame('string', $street->getType());
-        self::assertNull($street->getDescription());
-        self::assertNull($street->getSingular());
-        self::assertFalse($street->getIsNullable());
+        self::assertSame('street', $addressTransfer->getProperties()->offsetGet(1)->getName());
+        self::assertSame('string', $addressTransfer->getProperties()->offsetGet(1)->getType());
+        self::assertNull($addressTransfer->getProperties()->offsetGet(1)->getDescription());
+        self::assertNull($addressTransfer->getProperties()->offsetGet(1)->getSingular());
+        self::assertFalse($addressTransfer->getProperties()->offsetGet(1)->getIsNullable());
 
-        self::assertSame('zip', $zip->getName());
-        self::assertSame('int', $zip->getType());
-        self::assertNull($zip->getDescription());
-        self::assertNull($zip->getSingular());
-        self::assertFalse($zip->getIsNullable());
+        self::assertSame('User', $userTransfer->getName());
 
-        self::assertSame('User', $transfer2->getName());
+        self::assertSame('email', $userTransfer->getProperties()->offsetGet(0)->getName());
+        self::assertSame('string', $userTransfer->getProperties()->offsetGet(0)->getType());
+        self::assertNull($userTransfer->getProperties()->offsetGet(0)->getDescription());
+        self::assertNull($userTransfer->getProperties()->offsetGet(0)->getSingular());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(0)->getIsNullable());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(0)->getIsSensitive());
+        self::assertTrue($userTransfer->getProperties()->offsetGet(0)->getIsIdentifier());
 
-        self::assertSame('email', $transfer2->getProperties()->offsetGet(0)->getName());
-        self::assertSame('string', $transfer2->getProperties()->offsetGet(0)->getType());
-        self::assertNull($transfer2->getProperties()->offsetGet(0)->getDescription());
-        self::assertNull($transfer2->getProperties()->offsetGet(0)->getSingular());
-        self::assertFalse($transfer2->getProperties()->offsetGet(0)->getIsNullable());
-        self::assertFalse($transfer2->getProperties()->offsetGet(0)->getIsSensitive());
-        self::assertTrue($transfer2->getProperties()->offsetGet(0)->getIsIdentifier());
+        self::assertSame('password', $userTransfer->getProperties()->offsetGet(1)->getName());
+        self::assertSame('string', $userTransfer->getProperties()->offsetGet(1)->getType());
+        self::assertNull($userTransfer->getProperties()->offsetGet(1)->getDescription());
+        self::assertNull($userTransfer->getProperties()->offsetGet(1)->getSingular());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(1)->getIsNullable());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(1)->getIsSensitive());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(1)->getIsIdentifier());
 
-        self::assertSame('password', $transfer2->getProperties()->offsetGet(1)->getName());
-        self::assertSame('string', $transfer2->getProperties()->offsetGet(1)->getType());
-        self::assertNull($transfer2->getProperties()->offsetGet(1)->getDescription());
-        self::assertNull($transfer2->getProperties()->offsetGet(1)->getSingular());
-        self::assertFalse($transfer2->getProperties()->offsetGet(1)->getIsNullable());
-        self::assertFalse($transfer2->getProperties()->offsetGet(1)->getIsSensitive());
-        self::assertFalse($transfer2->getProperties()->offsetGet(1)->getIsIdentifier());
+        self::assertSame('plainPassword', $userTransfer->getProperties()->offsetGet(2)->getName());
+        self::assertSame('string', $userTransfer->getProperties()->offsetGet(2)->getType());
+        self::assertNull($userTransfer->getProperties()->offsetGet(2)->getDescription());
+        self::assertNull($userTransfer->getProperties()->offsetGet(2)->getSingular());
+        self::assertTrue($userTransfer->getProperties()->offsetGet(2)->getIsNullable());
+        self::assertTrue($userTransfer->getProperties()->offsetGet(2)->getIsSensitive());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(2)->getIsIdentifier());
 
-        self::assertSame('plainPassword', $transfer2->getProperties()->offsetGet(2)->getName());
-        self::assertSame('string', $transfer2->getProperties()->offsetGet(2)->getType());
-        self::assertNull($transfer2->getProperties()->offsetGet(2)->getDescription());
-        self::assertNull($transfer2->getProperties()->offsetGet(2)->getSingular());
-        self::assertTrue($transfer2->getProperties()->offsetGet(2)->getIsNullable());
-        self::assertTrue($transfer2->getProperties()->offsetGet(2)->getIsSensitive());
-        self::assertFalse($transfer2->getProperties()->offsetGet(2)->getIsIdentifier());
+        self::assertSame('addresses', $userTransfer->getProperties()->offsetGet(3)->getName());
+        self::assertSame('Address[]', $userTransfer->getProperties()->offsetGet(3)->getType());
+        self::assertNull($userTransfer->getProperties()->offsetGet(3)->getDescription());
+        self::assertSame('address', $userTransfer->getProperties()->offsetGet(3)->getSingular());
+        self::assertTrue($userTransfer->getProperties()->offsetGet(3)->getIsNullable());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(3)->getIsSensitive());
+        self::assertFalse($userTransfer->getProperties()->offsetGet(3)->getIsIdentifier());
 
-        self::assertSame('addresses', $transfer2->getProperties()->offsetGet(3)->getName());
-        self::assertSame('Address[]', $transfer2->getProperties()->offsetGet(3)->getType());
-        self::assertNull($transfer2->getProperties()->offsetGet(3)->getDescription());
-        self::assertSame('address', $transfer2->getProperties()->offsetGet(3)->getSingular());
-        self::assertTrue($transfer2->getProperties()->offsetGet(3)->getIsNullable());
-        self::assertFalse($transfer2->getProperties()->offsetGet(3)->getIsSensitive());
-        self::assertFalse($transfer2->getProperties()->offsetGet(3)->getIsIdentifier());
+        self::assertSame('Country', $countryTransfer->getName());
+
+        self::assertSame('iso', $countryTransfer->getProperties()->offsetGet(0)->getName());
+        self::assertSame('string', $countryTransfer->getProperties()->offsetGet(0)->getType());
+        self::assertNull($countryTransfer->getProperties()->offsetGet(0)->getDescription());
+        self::assertNull($countryTransfer->getProperties()->offsetGet(0)->getSingular());
+        self::assertFalse($countryTransfer->getProperties()->offsetGet(0)->getIsNullable());
+        self::assertFalse($countryTransfer->getProperties()->offsetGet(0)->getIsSensitive());
+        self::assertFalse($countryTransfer->getProperties()->offsetGet(0)->getIsIdentifier());
     }
 }

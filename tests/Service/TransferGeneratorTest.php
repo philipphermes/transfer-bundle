@@ -50,6 +50,7 @@ class TransferGeneratorTest extends TestCase
 
         unlink(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/UserTransfer.php');
+        unlink(__DIR__ . '/../Data/Generated/CountryTransfer.php');
         rmdir(__DIR__ . '/../Data/Generated');
     }
 
@@ -61,7 +62,7 @@ class TransferGeneratorTest extends TestCase
         $transferCollection = $this->xmlSchemaParser->parse();
 
         foreach ($transferCollection->getTransfers() as $transfer) {
-            $this->transferGenerator->generateTransfer($transfer);
+            $this->transferGenerator->generateTransfer($transfer, $transferCollection);
         }
 
         self::assertFileExists(__DIR__ . '/../Data/Generated/AddressTransfer.php');
@@ -69,12 +70,19 @@ class TransferGeneratorTest extends TestCase
 
         $user = new \PhilippHermes\TransferBundle\Tests\Data\Generated\UserTransfer();
         $address = new \PhilippHermes\TransferBundle\Tests\Data\Generated\AddressTransfer();
+        $country = new \PhilippHermes\TransferBundle\Tests\Data\Generated\CountryTransfer();
 
         $address->setStreet('test');
         self::assertSame('test', $address->getStreet());
 
         $address->setZip(123);
         self::assertSame(123, $address->getZip());
+
+        $country->setIso('de_DE');
+        self::assertSame('de_DE', $country->getIso());
+
+        $address->setCountry($country);
+        self::assertSame($country, $address->getCountry());
 
         $user->setEmail('test@example.com');
         self::assertSame('test@example.com', $user->getEmail());
@@ -83,6 +91,7 @@ class TransferGeneratorTest extends TestCase
         $user->setPassword('password');
         self::assertSame('password', $user->getPassword());
 
+        self::assertNull($user->getPlainPassword());
         $user->setPlainPassword('password');
         self::assertSame('password', $user->getPlainPassword());
         $user->eraseCredentials();

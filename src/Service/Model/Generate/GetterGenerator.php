@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhilippHermes\TransferBundle\Service\Model\Generate;
 
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 
 class GetterGenerator implements GetterGeneratorInterface
 {
@@ -17,15 +18,11 @@ class GetterGenerator implements GetterGeneratorInterface
     }
 
     /**
-     * @param PropertyTransfer $property
-     * @param string $code
-     * @param string|null $overwriteMethodName
-     *
-     * @return string
+     * @inheritDoc
      */
-    public function generateGetter(PropertyTransfer $property, string $code, ?string $overwriteMethodName = null): string
+    public function generateGetter(PropertyTransfer $property, TransferCollectionTransfer $transferCollection, string $code, ?string $overwriteMethodName = null): string
     {
-        $propertyType = $this->generatorHelper->getPropertyType($property->getType());
+        $propertyType = $this->generatorHelper->getPropertyType($property->getType(), $transferCollection);
         $annotationType = $this->generatorHelper->getPropertyAnnotationType($property->getType(), $propertyType);
 
         $code .= "    /**\n";

@@ -10,6 +10,7 @@ use PhilippHermes\TransferBundle\Service\Model\Generate\PropertyGeneratorInterfa
 use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generate\UserGeneratorInterface;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 
 readonly class TransferGenerator implements TransferGeneratorInterface
@@ -36,15 +37,15 @@ readonly class TransferGenerator implements TransferGeneratorInterface
     /**
      * @inheritDoc
      */
-    public function generateTransfer(TransferTransfer $transfer): void
+    public function generateTransfer(TransferTransfer $transfer, TransferCollectionTransfer $transferCollection): void
     {
         if ($transfer->getType() === 'user') {
             $transfer = $this->addRolesProperty($transfer);
         }
 
-        $code = $this->classGenerator->generateClassHeader($transfer, $this->namespace);
-        $code = $this->propertyGenerator->generateProperties($transfer, $code);
-        $code = $this->generateGettersSettersAndAdders($transfer, $code);
+        $code = $this->classGenerator->generateClassHeader($transfer, $transferCollection, $this->namespace);
+        $code = $this->propertyGenerator->generateProperties($transfer, $transferCollection, $code);
+        $code = $this->generateGettersSettersAndAdders($transfer, $transferCollection, $code);
 
         $code .= "}\n";
 
@@ -58,22 +59,23 @@ readonly class TransferGenerator implements TransferGeneratorInterface
 
     /**
      * @param TransferTransfer $transferTransfer
+     * @param TransferCollectionTransfer $transferCollection
      * @param string $code
      *
      * @return string
      */
-    protected function generateGettersSettersAndAdders(TransferTransfer $transferTransfer, string $code): string
+    protected function generateGettersSettersAndAdders(TransferTransfer $transferTransfer, TransferCollectionTransfer $transferCollection, string $code): string
     {
         $sensitiveProperties = [];
         $createdIdentifierGetter = false;
 
         foreach ($transferTransfer->getProperties() as $property) {
-            $code = $this->getterGenerator->generateGetter($property, $code);
-            $code = $this->setterGenerator->generateSetter($property, $code);
-            $code = $this->setterGenerator->generateAdder($property, $code);
+            $code = $this->getterGenerator->generateGetter($property, $transferCollection, $code);
+            $code = $this->setterGenerator->generateSetter($property, $transferCollection, $code);
+            $code = $this->setterGenerator->generateAdder($property, $transferCollection, $code);
 
             if ($property->getIsIdentifier() && !$createdIdentifierGetter) {
-                $code = $this->getterGenerator->generateGetter($property, $code, 'userIdentifier');
+                $code = $this->getterGenerator->generateGetter($property, $transferCollection, $code, 'userIdentifier');
 
                 $createdIdentifierGetter = true;
             }

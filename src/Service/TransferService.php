@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Service;
 
+use PhilippHermes\TransferBundle\Service\Model\TransferCleanerInterface;
 use PhilippHermes\TransferBundle\Service\Model\TransferGeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParserInterface;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
@@ -18,6 +19,7 @@ readonly class TransferService implements TransferServiceInterface
     public function __construct(
         protected XmlSchemaParserInterface $xmlSchemaParser,
         protected TransferGeneratorInterface $transferGenerator,
+        protected TransferCleanerInterface $transferCleaner,
     )
     {
     }
@@ -33,8 +35,16 @@ readonly class TransferService implements TransferServiceInterface
     /**
      * @inheritDoc
      */
-    public function generateTransfer(TransferTransfer $transfer): void
+    public function generateTransfer(TransferTransfer $transfer, TransferCollectionTransfer $transferCollection): void
     {
-        $this->transferGenerator->generateTransfer($transfer);
+        $this->transferGenerator->generateTransfer($transfer, $transferCollection);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function clean(): void
+    {
+        $this->transferCleaner->clean();
     }
 }

@@ -11,5 +11,10 @@
 
     <transfer name="Address">
         <property name="street" type="string"/>
+        <property name="country" type="Country"/>
+    </transfer>
+
+    <transfer name="Country">
+        <property name="iso" type="string"/>
     </transfer>
 </transfers>

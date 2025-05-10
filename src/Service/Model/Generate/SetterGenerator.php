@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhilippHermes\TransferBundle\Service\Model\Generate;
 
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 
 class SetterGenerator implements SetterGeneratorInterface
 {
@@ -17,14 +18,11 @@ class SetterGenerator implements SetterGeneratorInterface
     }
 
     /**
-     * @param PropertyTransfer $property
-     * @param string $code
-     *
-     * @return string
+     * @inheritDoc
      */
-    public function generateSetter(PropertyTransfer $property, string $code): string
+    public function generateSetter(PropertyTransfer $property, TransferCollectionTransfer $transferCollection, string $code): string
     {
-        $propertyType = $this->generatorHelper->getPropertyType($property->getType());
+        $propertyType = $this->generatorHelper->getPropertyType($property->getType(), $transferCollection);
         $annotationType = $this->generatorHelper->getPropertyAnnotationType($property->getType(), $propertyType);
 
         $code .= "    /**\n";
@@ -56,14 +54,11 @@ class SetterGenerator implements SetterGeneratorInterface
     }
 
     /**
-     * @param PropertyTransfer $property
-     * @param string $code
-     *
-     * @return string
+     * @inheritDoc
      */
-    public function generateAdder(PropertyTransfer $property, string $code): string
+    public function generateAdder(PropertyTransfer $property, TransferCollectionTransfer $transferCollection, string $code): string
     {
-        $propertyType = $this->generatorHelper->getPropertyType($property->getType());
+        $propertyType = $this->generatorHelper->getPropertyType($property->getType(), $transferCollection);
 
         if ($propertyType === 'ArrayObject') {
             $code .= "    /**\n";

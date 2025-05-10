@@ -4,14 +4,17 @@ declare(strict_types = 1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Generate;
 
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
+
 interface GeneratorHelperInterface
 {
     /**
      * @param string $type
+     * @param TransferCollectionTransfer $transferCollectionTransfer
      *
      * @return string
      */
-    public function getPropertyType(string $type): string;
+    public function getPropertyType(string $type, TransferCollectionTransfer $transferCollectionTransfer): string;
 
     /**
      * @param string $type

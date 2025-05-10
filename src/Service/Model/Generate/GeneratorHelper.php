@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Generate;
 
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
+
 class GeneratorHelper implements GeneratorHelperInterface
 {
     /**
-     * @param string $type
-     *
-     * @return string
+     * @inheritDoc
      */
-    public function getPropertyType(string $type): string
+    public function getPropertyType(string $type, TransferCollectionTransfer $transferCollectionTransfer): string
     {
         if ($this->isArrayType($type)) {
             $propertyType = rtrim($type, '[]');
@@ -19,14 +19,21 @@ class GeneratorHelper implements GeneratorHelperInterface
             return $this->isBasicType($propertyType) ? 'array' : 'ArrayObject';
         }
 
-        return $this->isBasicType($type) ? strtolower($type) : $type;
+        if ($this->isBasicType($type)) {
+            return strtolower($type);
+        }
+
+        foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
+            if ($transfer->getName() === $type) {
+                return $transfer->getName() . 'Transfer';
+            }
+        }
+
+        return $type;
     }
 
     /**
-     * @param string $type
-     * @param string $propertyType
-     *
-     * @return string
+     * @inheritDoc
      */
     public function getPropertyAnnotationType(string $type, string $propertyType): string
     {
@@ -42,9 +49,7 @@ class GeneratorHelper implements GeneratorHelperInterface
     }
 
     /**
-     * @param string $type
-     *
-     * @return bool
+     * @inheritDoc
      */
     public function isBasicType(string $type): bool
     {
@@ -52,9 +57,7 @@ class GeneratorHelper implements GeneratorHelperInterface
     }
 
     /**
-     * @param string $type
-     *
-     * @return bool
+     * @inheritDoc
      */
     public function isArrayType(string $type): bool
     {

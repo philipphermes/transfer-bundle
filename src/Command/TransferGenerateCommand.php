@@ -45,6 +45,7 @@ class TransferGenerateCommand extends Command
 
         $io->info(sprintf('Reading dir: %s', $this->schemaDir));
 
+        $this->transferService->clean();
         $collection = $this->transferService->parse();
 
         if ($collection->getTransfers()->count() === 0) {
@@ -56,7 +57,7 @@ class TransferGenerateCommand extends Command
         foreach ($collection->getTransfers() as $transfer) {
             $io->text(sprintf('Generating transfer: %s', $transfer->getName()));
 
-            $this->transferService->generateTransfer($transfer);
+            $this->transferService->generateTransfer($transfer, $collection);
         }
 
         $io->success(sprintf('Transfers generated in dir: %s', $this->outputDir));

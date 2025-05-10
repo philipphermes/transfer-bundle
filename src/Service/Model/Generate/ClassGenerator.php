@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Generate;
 
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 
 class ClassGenerator implements ClassGeneratorInterface
@@ -17,12 +18,9 @@ class ClassGenerator implements ClassGeneratorInterface
     }
 
     /**
-     * @param TransferTransfer $transferTransfer
-     * @param string $namespace
-     *
-     * @return string
+     * @inheritDoc
      */
-    public function generateClassHeader(TransferTransfer $transferTransfer, string $namespace): string
+    public function generateClassHeader(TransferTransfer $transferTransfer, TransferCollectionTransfer $transferCollection, string $namespace): string
     {
         $code = "<?php\n\n";
         $code .= "declare(strict_types = 1);\n\n";
@@ -31,9 +29,9 @@ class ClassGenerator implements ClassGeneratorInterface
         $useTypes = [];
 
         foreach ($transferTransfer->getProperties() as $property) {
-            $propertyType = $this->generatorHelper->getPropertyType($property->getType());
+            $propertyType = $this->generatorHelper->getPropertyType($property->getType(), $transferCollection);
 
-            if (!$this->generatorHelper->isBasicType($propertyType) && $propertyType !== 'array' && !in_array($propertyType, $useTypes, true)) {
+            if (!$this->generatorHelper->isBasicType($propertyType) && $propertyType !== 'array' && !str_contains($propertyType, 'Transfer') && !in_array($propertyType, $useTypes, true)) {
                 $code .= sprintf("use %s;\n", $propertyType);
                 $useTypes[] = $propertyType;
             }
