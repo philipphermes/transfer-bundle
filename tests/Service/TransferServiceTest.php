@@ -29,9 +29,6 @@ class TransferServiceTest extends TestCase
     {
         parent::setUp();
 
-        $helper = new GeneratorHelper();
-
-        $this->xmlSchemaParser = new TransferParser(__DIR__ . '/../Data');
         $this->transferService = new TransferService(
             new TransferServiceFactory(),
         );
@@ -43,8 +40,6 @@ class TransferServiceTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-
-        return;
 
         unlink(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/UserTransfer.php');
