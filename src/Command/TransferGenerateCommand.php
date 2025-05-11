@@ -5,6 +5,8 @@ declare(strict_types = 1);
 namespace PhilippHermes\TransferBundle\Command;
 
 use PhilippHermes\TransferBundle\Service\TransferServiceInterface;
+use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,18 +16,27 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'transfer:generate', description: 'Generate Transfers from XML schemas')]
 class TransferGenerateCommand extends Command
 {
+    protected GeneratorConfigTransfer $generatorConfig;
+
     /**
      * @param TransferServiceInterface $transferService
-     * @param string|null $name
+     * @param string $schemaDir
+     * @param string $outputDir
+     * @param string $namespace
      */
     public function __construct(
         protected readonly TransferServiceInterface $transferService,
-        protected readonly string $schemaDir,
-        protected readonly string $outputDir,
-        ?string $name = 'transfer:generate',
+        string $schemaDir,
+        string $outputDir,
+        string $namespace,
     )
     {
-        parent::__construct($name);
+        parent::__construct();
+
+        $this->generatorConfig = (new GeneratorConfigTransfer())
+            ->setSchemaDirectory($schemaDir)
+            ->setOutputDirectory($outputDir)
+            ->setNamespace($namespace);
     }
 
     /**
@@ -43,24 +54,21 @@ class TransferGenerateCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Transfer Generator');
 
-        $io->info(sprintf('Reading dir: %s', $this->schemaDir));
+        $io->info(sprintf('Reading dir: %s', $this->generatorConfig->getSchemaDirectory()));
 
-        $this->transferService->clean();
-        $collection = $this->transferService->parse();
+        $transferCollectionTransfer = $this->transferService->generate($this->generatorConfig);
 
-        if ($collection->getTransfers()->count() === 0) {
-            $io->warning(sprintf('No transfers found in dir: %s', $this->schemaDir));
+        $transfers = array_map(
+            fn (TransferTransfer $transferTransfer) => '* ' . $transferTransfer->getName(),
+            $transferCollectionTransfer->getTransfers()->getArrayCopy(),
+        );
 
-            return Command::FAILURE;
-        }
+        array_unshift(
+            $transfers,
+            sprintf('Transfers generated in dir: %s', $this->generatorConfig->getOutputDirectory())
+        );
 
-        foreach ($collection->getTransfers() as $transfer) {
-            $io->text(sprintf('Generating transfer: %s', $transfer->getName()));
-
-            $this->transferService->generateTransfer($transfer, $collection);
-        }
-
-        $io->success(sprintf('Transfers generated in dir: %s', $this->outputDir));
+        $io->info($transfers);
 
         return Command::SUCCESS;
     }

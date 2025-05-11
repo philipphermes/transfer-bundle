@@ -2,24 +2,23 @@
 
 declare(strict_types = 1);
 
-namespace PhilippHermes\TransferBundle\Service\Model;
+namespace PhilippHermes\TransferBundle\Service\Model\Parser;
 
+use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
-use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 use Symfony\Component\Finder\Finder;
 
-readonly class XmlSchemaParser implements XmlSchemaParserInterface
+readonly class TransferParser implements TransferParserInterface
 {
-    public function __construct(protected string $schemaDir) {}
-
     /**
      * @inheritDoc
      */
-    public function parse(): TransferCollectionTransfer
+    public function parse(GeneratorConfigTransfer $generatorConfigTransfer): TransferCollectionTransfer
     {
         $finder = new Finder();
-        $finder->files()->in($this->schemaDir)->name('*.xml');
+        $finder->files()->in($generatorConfigTransfer->getSchemaDirectory())->name('*.xml');
 
         $collection = new TransferCollectionTransfer();
 

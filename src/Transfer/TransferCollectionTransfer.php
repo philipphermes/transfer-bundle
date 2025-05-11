@@ -33,7 +33,7 @@ class TransferCollectionTransfer
     /**
      * @param ArrayObject<array-key, TransferTransfer> $transfers
      *
-     * @return $this
+     * @return self
      */
     public function setTransfers(ArrayObject $transfers): self
     {
@@ -45,7 +45,7 @@ class TransferCollectionTransfer
     /**
      * @param TransferTransfer $transfer
      *
-     * @return $this
+     * @return self
      */
     public function addTransfer(TransferTransfer $transfer): self
     {
@@ -69,7 +69,7 @@ class TransferCollectionTransfer
     /**
      * @param array<string> $errors
      *
-     * @return $this
+     * @return self
      */
     public function setErrors(array $errors): self
     {
@@ -81,7 +81,7 @@ class TransferCollectionTransfer
     /**
      * @param string $error
      *
-     * @return $this
+     * @return self
      */
     public function addError(string $error): self
     {

@@ -14,11 +14,19 @@ class PropertyTransfer
 
     protected ?string $description;
 
+    protected string $realType;
+
+    protected string $annotationType;
+
     protected bool $isNullable;
 
     protected bool $isIdentifier;
 
     protected bool $isSensitive;
+
+    protected bool $isBasic;
+
+    protected bool $isArray;
 
     /**
      * @return string
@@ -31,7 +39,7 @@ class PropertyTransfer
     /**
      * @param string $name
      *
-     * @return $this
+     * @return self
      */
     public function setName(string $name): self
     {
@@ -51,7 +59,7 @@ class PropertyTransfer
     /**
      * @param string|null $singular
      *
-     * @return $this
+     * @return self
      */
     public function setSingular(?string $singular): self
     {
@@ -71,7 +79,7 @@ class PropertyTransfer
     /**
      * @param string $type
      *
-     * @return $this
+     * @return self
      */
     public function setType(string $type): self
     {
@@ -91,11 +99,51 @@ class PropertyTransfer
     /**
      * @param string|null $description
      *
-     * @return $this
+     * @return self
      */
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRealType(): string
+    {
+        return $this->realType;
+    }
+
+    /**
+     * @param string $realType
+     *
+     * @return self
+     */
+    public function setRealType(string $realType): self
+    {
+        $this->realType = $realType;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAnnotationType(): string
+    {
+        return $this->annotationType;
+    }
+
+    /**
+     * @param string $annotationType
+     *
+     * @return self
+     */
+    public function setAnnotationType(string $annotationType): self
+    {
+        $this->annotationType = $annotationType;
 
         return $this;
     }
@@ -111,7 +159,7 @@ class PropertyTransfer
     /**
      * @param bool $isNullable
      *
-     * @return $this
+     * @return self
      */
     public function setIsNullable(bool $isNullable): self
     {
@@ -131,7 +179,7 @@ class PropertyTransfer
     /**
      * @param bool $isIdentifier
      *
-     * @return $this
+     * @return self
      */
     public function setIsIdentifier(bool $isIdentifier): self
     {
@@ -151,11 +199,51 @@ class PropertyTransfer
     /**
      * @param bool $isSensitive
      *
-     * @return $this
+     * @return self
      */
     public function setIsSensitive(bool $isSensitive): self
     {
         $this->isSensitive = $isSensitive;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsBasic(): bool
+    {
+        return $this->isBasic;
+    }
+
+    /**
+     * @param bool $isBasic
+     *
+     * @return self
+     */
+    public function setIsBasic(bool $isBasic): self
+    {
+        $this->isBasic = $isBasic;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsArray(): bool
+    {
+        return $this->isArray;
+    }
+
+    /**
+     * @param bool $isArray
+     *
+     * @return self
+     */
+    public function setIsArray(bool $isArray): self
+    {
+        $this->isArray = $isArray;
 
         return $this;
     }

@@ -2,16 +2,17 @@
 
 declare(strict_types=1);
 
-namespace PhilippHermes\TransferBundle\Service\Model\Generate;
+namespace PhilippHermes\TransferBundle\Service\Model\Generator\Helper;
 
-use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
+use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 
 class GeneratorHelper implements GeneratorHelperInterface
 {
     /**
      * @inheritDoc
      */
-    public function getPropertyType(string $type, TransferCollectionTransfer $transferCollectionTransfer): string
+    public function getPropertyType(string $type, array $transferTypes): string
     {
         if ($this->isArrayType($type)) {
             $propertyType = rtrim($type, '[]');
@@ -23,9 +24,9 @@ class GeneratorHelper implements GeneratorHelperInterface
             return strtolower($type);
         }
 
-        foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
-            if ($transfer->getName() === $type) {
-                return $transfer->getName() . 'Transfer';
+        foreach ($transferTypes as $transferType) {
+            if ($transferType === $type) {
+                return $transferType . 'Transfer';
             }
         }
 
@@ -62,5 +63,33 @@ class GeneratorHelper implements GeneratorHelperInterface
     public function isArrayType(string $type): bool
     {
         return str_ends_with($type, '[]');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function addRoleProperty(TransferTransfer $transferTransfer): TransferTransfer
+    {
+        if ($transferTransfer->getType() !== 'user') {
+            return $transferTransfer;
+        }
+
+        foreach ($transferTransfer->getProperties() as $property) {
+            if ($property->getName() === 'roles') {
+                return $transferTransfer;
+            }
+        }
+
+        $transferTransfer->addProperty((new PropertyTransfer())
+            ->setName('roles')
+            ->setSingular('role')
+            ->setType('string[]')
+            ->setIsNullable(false)
+            ->setDescription(null)
+            ->setIsIdentifier(false)
+            ->setIsSensitive(false),
+        );
+
+        return $transferTransfer;
     }
 }

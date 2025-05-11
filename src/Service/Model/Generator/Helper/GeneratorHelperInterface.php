@@ -2,19 +2,19 @@
 
 declare(strict_types = 1);
 
-namespace PhilippHermes\TransferBundle\Service\Model\Generate;
+namespace PhilippHermes\TransferBundle\Service\Model\Generator\Helper;
 
-use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 
 interface GeneratorHelperInterface
 {
     /**
      * @param string $type
-     * @param TransferCollectionTransfer $transferCollectionTransfer
+     * @param array<string> $transferTypes
      *
      * @return string
      */
-    public function getPropertyType(string $type, TransferCollectionTransfer $transferCollectionTransfer): string;
+    public function getPropertyType(string $type, array $transferTypes): string;
 
     /**
      * @param string $type
@@ -37,4 +37,11 @@ interface GeneratorHelperInterface
      * @return bool
      */
     public function isArrayType(string $type): bool;
+
+    /**
+     * @param TransferTransfer $transferTransfer
+     *
+     * @return TransferTransfer
+     */
+    public function addRoleProperty(TransferTransfer $transferTransfer): TransferTransfer;
 }

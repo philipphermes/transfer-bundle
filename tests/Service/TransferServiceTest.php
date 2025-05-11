@@ -5,20 +5,22 @@ declare(strict_types=1);
 namespace PhilippHermes\TransferBundle\Tests\Service;
 
 use PhilippHermes\TransferBundle\Service\Model\Generate\ClassGenerator;
-use PhilippHermes\TransferBundle\Service\Model\Generate\GeneratorHelper;
 use PhilippHermes\TransferBundle\Service\Model\Generate\GetterGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generate\PropertyGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generate\UserGenerator;
+use PhilippHermes\TransferBundle\Service\Model\Generator\Helper\GeneratorHelper;
+use PhilippHermes\TransferBundle\Service\Model\Parser\TransferParser;
 use PhilippHermes\TransferBundle\Service\Model\TransferGenerator;
-use PhilippHermes\TransferBundle\Service\Model\XmlSchemaParser;
+use PhilippHermes\TransferBundle\Service\TransferService;
+use PhilippHermes\TransferBundle\Service\TransferServiceFactory;
+use PhilippHermes\TransferBundle\Service\TransferServiceInterface;
+use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use PHPUnit\Framework\TestCase;
 
-class TransferGeneratorTest extends TestCase
+class TransferServiceTest extends TestCase
 {
-    private XmlSchemaParser $xmlSchemaParser;
-
-    private TransferGenerator $transferGenerator;
+    private TransferServiceInterface $transferService;
 
     /**
      * @return void
@@ -29,15 +31,9 @@ class TransferGeneratorTest extends TestCase
 
         $helper = new GeneratorHelper();
 
-        $this->xmlSchemaParser = new XmlSchemaParser(__DIR__ . '/../Data');
-        $this->transferGenerator = new TransferGenerator(
-            'PhilippHermes\TransferBundle\Tests\Data\Generated',
-            __DIR__ . '/../Data/Generated',
-            new ClassGenerator($helper),
-            new PropertyGenerator($helper),
-            new GetterGenerator($helper),
-            new SetterGenerator($helper),
-            new UserGenerator(),
+        $this->xmlSchemaParser = new TransferParser(__DIR__ . '/../Data');
+        $this->transferService = new TransferService(
+            new TransferServiceFactory(),
         );
     }
 
@@ -47,6 +43,8 @@ class TransferGeneratorTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
+
+        return;
 
         unlink(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/UserTransfer.php');
@@ -59,14 +57,15 @@ class TransferGeneratorTest extends TestCase
      */
     public function testGenerate(): void
     {
-        $transferCollection = $this->xmlSchemaParser->parse();
-
-        foreach ($transferCollection->getTransfers() as $transfer) {
-            $this->transferGenerator->generateTransfer($transfer, $transferCollection);
-        }
+        $transferCollection = $this->transferService->generate((new GeneratorConfigTransfer())
+            ->setSchemaDirectory(__DIR__ . '/../Data')
+            ->setOutputDirectory(__DIR__ . '/../Data/Generated')
+            ->setNamespace('PhilippHermes\TransferBundle\Tests\Data\Generated')
+        );
 
         self::assertFileExists(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         self::assertFileExists(__DIR__ . '/../Data/Generated/UserTransfer.php');
+        self::assertFileExists(__DIR__ . '/../Data/Generated/CountryTransfer.php');
 
         $user = new \PhilippHermes\TransferBundle\Tests\Data\Generated\UserTransfer();
         $address = new \PhilippHermes\TransferBundle\Tests\Data\Generated\AddressTransfer();

@@ -2,25 +2,24 @@
 
 declare(strict_types=1);
 
-namespace PhilippHermes\TransferBundle\Service\Model;
+namespace PhilippHermes\TransferBundle\Service\Model\Cleaner;
 
+use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use Symfony\Component\Finder\Finder;
 
 readonly class TransferCleaner implements TransferCleanerInterface
 {
-    public function __construct(
-        protected string $outputDir,
-    )
-    {
-    }
-
     /**
      * @inheritDoc
      */
-    public function clean(): void
+    public function clean(GeneratorConfigTransfer $generatorConfigTransfer): void
     {
+        if (!is_dir($generatorConfigTransfer->getOutputDirectory())) {
+            return;
+        }
+
         $finder = new Finder();
-        $finder->files()->in($this->outputDir)->name('*Transfer.php');
+        $finder->files()->in($generatorConfigTransfer->getOutputDirectory())->name('*Transfer.php');
 
         if (!$finder->hasResults()) {
             return;
@@ -28,7 +27,6 @@ readonly class TransferCleaner implements TransferCleanerInterface
 
         foreach ($finder as $file) {
             $absoluteFilePath = $file->getRealPath();
-
             unlink($absoluteFilePath);
         }
     }

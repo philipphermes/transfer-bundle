@@ -18,6 +18,11 @@ class TransferTransfer
     protected ArrayObject $properties;
 
     /**
+     * @var ArrayObject<array-key, PropertyTransfer>
+     */
+    protected ArrayObject $sensitiveProperties;
+
+    /**
      * @return string
      */
     public function getName(): string
@@ -28,7 +33,7 @@ class TransferTransfer
     /**
      * @param string $name
      *
-     * @return $this
+     * @return self
      */
     public function setName(string $name): self
     {
@@ -48,7 +53,7 @@ class TransferTransfer
     /**
      * @param string $type
      *
-     * @return $this
+     * @return self
      */
     public function setType(string $type): self
     {
@@ -72,7 +77,7 @@ class TransferTransfer
     /**
      * @param ArrayObject<array-key, PropertyTransfer> $properties
      *
-     * @return $this
+     * @return self
      */
     public function setProperties(ArrayObject $properties): self
     {
@@ -84,7 +89,7 @@ class TransferTransfer
     /**
      * @param PropertyTransfer $property
      *
-     * @return $this
+     * @return self
      */
     public function addProperty(PropertyTransfer $property): self
     {
@@ -93,6 +98,46 @@ class TransferTransfer
         }
 
         $this->properties->append($property);
+
+        return $this;
+    }
+
+    /**
+     * @return ArrayObject<array-key, PropertyTransfer>
+     */
+    public function getSensitiveProperties(): ArrayObject
+    {
+        if (!isset($this->sensitiveProperties)) {
+            return new ArrayObject();
+        }
+
+        return $this->sensitiveProperties;
+    }
+
+    /**
+     * @param ArrayObject<array-key, PropertyTransfer> $properties
+     *
+     * @return self
+     */
+    public function setSensitiveProperties(ArrayObject $properties): self
+    {
+        $this->sensitiveProperties = $properties;
+
+        return $this;
+    }
+
+    /**
+     * @param PropertyTransfer $property
+     *
+     * @return self
+     */
+    public function addSensitiveProperty(PropertyTransfer $property): self
+    {
+        if (!isset($this->sensitiveProperties)) {
+            $this->sensitiveProperties = new ArrayObject();
+        }
+
+        $this->sensitiveProperties->append($property);
 
         return $this;
     }
