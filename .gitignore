@@ -3,3 +3,4 @@ vendor/
 .phpunit.cache/
 tests/data/Generated
 composer.lock
+.DS_Store
