@@ -14,7 +14,7 @@ class SensitiveGeneratorStep implements GeneratorStepInterface
      */
     public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferTransfer $transferTransfer, string $code): string
     {
-        if ($transferTransfer->getSensitiveProperties()->count() === 0) {
+        if ($transferTransfer->getType() !== 'user') {
             return $code;
         }
 
