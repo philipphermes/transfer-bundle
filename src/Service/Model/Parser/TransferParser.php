@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Parser;
 
+use PhilippHermes\TransferBundle\Service\Model\Type\PropertyTypeMapper;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
@@ -12,15 +13,27 @@ use Symfony\Component\Finder\Finder;
 
 readonly class TransferParser implements TransferParserInterface
 {
+    public function __construct(
+        protected PropertyTypeMapper $propertyTypeMapper,
+    )
+    {
+    }
+
     /**
      * @inheritDoc
      */
     public function parse(GeneratorConfigTransfer $generatorConfigTransfer): TransferCollectionTransfer
     {
-        $finder = new Finder();
-        $finder->files()->in($generatorConfigTransfer->getSchemaDirectory())->name('*.xml');
-
         $collection = new TransferCollectionTransfer();
+
+        $paths = glob($generatorConfigTransfer->getSchemaDirectory(), GLOB_ONLYDIR);
+
+        if ($paths === false) {
+            return $collection->addError('Could not parse ' . $generatorConfigTransfer->getSchemaDirectory());
+        }
+
+        $finder = new Finder();
+        $finder->files()->in($paths)->name('*.xml');
 
         if (!$finder->hasResults()) {
             return $collection;
@@ -37,7 +50,7 @@ readonly class TransferParser implements TransferParserInterface
 
             foreach ($xml->transfer as $transferElement) {
                 if (!isset($transferElement['name'])) {
-                    $collection->addError("Missing 'name' attribute in transfer element of '{$file->getFilename()}'");
+                    $collection->addError("Missing 'name' attribute in file '{$file->getFilename()}'");
 
                     continue;
                 }
@@ -51,21 +64,42 @@ readonly class TransferParser implements TransferParserInterface
                 }
 
                 foreach ($transferElement->property as $propertyElement) {
-                    if (!isset($propertyElement['name']) || !isset($propertyElement['type'])) {
-                        $collection->addError("Missing required attributes in property element of '{$file->getFilename()}'");
+                    $skip = false;
 
+                    if (!isset($propertyElement['name'])) {
+                        $collection->addError(sprintf(
+                            "Missing 'name' attribute in transfer '%s' in file '%s'",
+                            $transferElement['name'] ?? '',
+                            $file->getFilename(),
+                        ));
+
+                        $skip = true;
+                    }
+
+                    if (!isset($propertyElement['type'])) {
+                        $collection->addError(sprintf(
+                            "Missing 'type' attribute in transfer '%s' in file '%s'",
+                            $transferElement['name'] ?? '',
+                            $file->getFilename(),
+                        ));
+
+                        $skip = true;
+                    }
+
+                    if ($skip) {
                         continue;
                     }
 
                     if (!$this->hasProperty((string)$propertyElement['name'], $transfer)) {
                         $property = (new PropertyTransfer())
                             ->setName((string)$propertyElement['name'])
-                            ->setType((string)$propertyElement['type'])
                             ->setDescription(isset($propertyElement['description']) ? (string)$propertyElement['description'] : null)
                             ->setSingular(isset($propertyElement['singular']) ? (string)$propertyElement['singular'] : null)
                             ->setIsNullable(isset($propertyElement['isNullable']) && ((string)$propertyElement['isNullable'] === 'true'))
                             ->setIsIdentifier(isset($propertyElement['isIdentifier']) && ((string)$propertyElement['isIdentifier'] === 'true'))
                             ->setIsSensitive(isset($propertyElement['isSensitive']) && ((string)$propertyElement['isSensitive'] === 'true'));
+
+                        $property = $this->propertyTypeMapper->addTypes($generatorConfigTransfer, $property, (string)$propertyElement['type']);
 
                         $transfer->addProperty($property);
                     }

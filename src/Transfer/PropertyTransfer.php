@@ -7,26 +7,15 @@ namespace PhilippHermes\TransferBundle\Transfer;
 class PropertyTransfer
 {
     protected string $name;
-
-    protected ?string $singular;
-
+    protected ?string $singular = null;
     protected string $type;
-
-    protected ?string $description;
-
-    protected string $realType;
-
+    protected ?string $singularType = null;
     protected string $annotationType;
-
-    protected bool $isNullable;
-
-    protected bool $isIdentifier;
-
-    protected bool $isSensitive;
-
-    protected bool $isBasic;
-
-    protected bool $isArray;
+    protected ?string $singularAnnotationType = null;
+    protected ?string $description = null;
+    protected bool $isNullable = false;
+    protected bool $isIdentifier = false;
+    protected bool $isSensitive = false;
 
     /**
      * @return string
@@ -38,13 +27,11 @@ class PropertyTransfer
 
     /**
      * @param string $name
-     *
-     * @return self
+     * @return PropertyTransfer
      */
-    public function setName(string $name): self
+    public function setName(string $name): PropertyTransfer
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -58,13 +45,11 @@ class PropertyTransfer
 
     /**
      * @param string|null $singular
-     *
-     * @return self
+     * @return PropertyTransfer
      */
-    public function setSingular(?string $singular): self
+    public function setSingular(?string $singular): PropertyTransfer
     {
         $this->singular = $singular;
-
         return $this;
     }
 
@@ -78,53 +63,29 @@ class PropertyTransfer
 
     /**
      * @param string $type
-     *
-     * @return self
+     * @return PropertyTransfer
      */
-    public function setType(string $type): self
+    public function setType(string $type): PropertyTransfer
     {
         $this->type = $type;
-
         return $this;
     }
 
     /**
      * @return string|null
      */
-    public function getDescription(): ?string
+    public function getSingularType(): ?string
     {
-        return $this->description;
+        return $this->singularType;
     }
 
     /**
-     * @param string|null $description
-     *
-     * @return self
+     * @param string|null $singularType
+     * @return PropertyTransfer
      */
-    public function setDescription(?string $description): self
+    public function setSingularType(?string $singularType): PropertyTransfer
     {
-        $this->description = $description;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getRealType(): string
-    {
-        return $this->realType;
-    }
-
-    /**
-     * @param string $realType
-     *
-     * @return self
-     */
-    public function setRealType(string $realType): self
-    {
-        $this->realType = $realType;
-
+        $this->singularType = $singularType;
         return $this;
     }
 
@@ -138,113 +99,101 @@ class PropertyTransfer
 
     /**
      * @param string $annotationType
-     *
-     * @return self
+     * @return PropertyTransfer
      */
-    public function setAnnotationType(string $annotationType): self
+    public function setAnnotationType(string $annotationType): PropertyTransfer
     {
         $this->annotationType = $annotationType;
+        return $this;
+    }
 
+    /**
+     * @return string|null
+     */
+    public function getSingularAnnotationType(): ?string
+    {
+        return $this->singularAnnotationType;
+    }
+
+    /**
+     * @param string|null $singularAnnotationType
+     * @return PropertyTransfer
+     */
+    public function setSingularAnnotationType(?string $singularAnnotationType): PropertyTransfer
+    {
+        $this->singularAnnotationType = $singularAnnotationType;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param string|null $description
+     * @return PropertyTransfer
+     */
+    public function setDescription(?string $description): PropertyTransfer
+    {
+        $this->description = $description;
         return $this;
     }
 
     /**
      * @return bool
      */
-    public function getIsNullable(): bool
+    public function isNullable(): bool
     {
         return $this->isNullable;
     }
 
     /**
      * @param bool $isNullable
-     *
-     * @return self
+     * @return PropertyTransfer
      */
-    public function setIsNullable(bool $isNullable): self
+    public function setIsNullable(bool $isNullable): PropertyTransfer
     {
         $this->isNullable = $isNullable;
-
         return $this;
     }
 
     /**
      * @return bool
      */
-    public function getIsIdentifier(): bool
+    public function isIdentifier(): bool
     {
         return $this->isIdentifier;
     }
 
     /**
      * @param bool $isIdentifier
-     *
-     * @return self
+     * @return PropertyTransfer
      */
-    public function setIsIdentifier(bool $isIdentifier): self
+    public function setIsIdentifier(bool $isIdentifier): PropertyTransfer
     {
         $this->isIdentifier = $isIdentifier;
-
         return $this;
     }
 
     /**
      * @return bool
      */
-    public function getIsSensitive(): bool
+    public function isSensitive(): bool
     {
         return $this->isSensitive;
     }
 
     /**
      * @param bool $isSensitive
-     *
-     * @return self
+     * @return PropertyTransfer
      */
-    public function setIsSensitive(bool $isSensitive): self
+    public function setIsSensitive(bool $isSensitive): PropertyTransfer
     {
         $this->isSensitive = $isSensitive;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getIsBasic(): bool
-    {
-        return $this->isBasic;
-    }
-
-    /**
-     * @param bool $isBasic
-     *
-     * @return self
-     */
-    public function setIsBasic(bool $isBasic): self
-    {
-        $this->isBasic = $isBasic;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getIsArray(): bool
-    {
-        return $this->isArray;
-    }
-
-    /**
-     * @param bool $isArray
-     *
-     * @return self
-     */
-    public function setIsArray(bool $isArray): self
-    {
-        $this->isArray = $isArray;
-
         return $this;
     }
 }

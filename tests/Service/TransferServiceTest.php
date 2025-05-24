@@ -10,7 +10,6 @@ use PhilippHermes\TransferBundle\Service\Model\Generate\PropertyGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generate\SetterGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generate\UserGenerator;
 use PhilippHermes\TransferBundle\Service\Model\Generator\Helper\GeneratorHelper;
-use PhilippHermes\TransferBundle\Service\Model\Parser\TransferParser;
 use PhilippHermes\TransferBundle\Service\Model\TransferGenerator;
 use PhilippHermes\TransferBundle\Service\TransferService;
 use PhilippHermes\TransferBundle\Service\TransferServiceFactory;
@@ -52,19 +51,27 @@ class TransferServiceTest extends TestCase
      */
     public function testGenerate(): void
     {
-        $transferCollection = $this->transferService->generate((new GeneratorConfigTransfer())
-            ->setSchemaDirectory(__DIR__ . '/../Data')
+        $config = (new GeneratorConfigTransfer())
+            ->setSchemaDirectory(__DIR__ . '/../Data/*/Transfers')
             ->setOutputDirectory(__DIR__ . '/../Data/Generated')
-            ->setNamespace('PhilippHermes\TransferBundle\Tests\Data\Generated')
+            ->setNamespace('PhilippHermes\TransferBundle\Tests\Data\Generated');
+
+        $transferCollection = $this->transferService->parse($config);
+
+        $this->transferService->generate(
+            $config,
+            $transferCollection,
         );
 
         self::assertFileExists(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         self::assertFileExists(__DIR__ . '/../Data/Generated/UserTransfer.php');
         self::assertFileExists(__DIR__ . '/../Data/Generated/CountryTransfer.php');
+        self::assertFileExists(__DIR__ . '/../Data/Generated/FooTransfer.php');
 
         $user = new \PhilippHermes\TransferBundle\Tests\Data\Generated\UserTransfer();
         $address = new \PhilippHermes\TransferBundle\Tests\Data\Generated\AddressTransfer();
         $country = new \PhilippHermes\TransferBundle\Tests\Data\Generated\CountryTransfer();
+        $foo = new \PhilippHermes\TransferBundle\Tests\Data\Generated\FooTransfer();
 
         $address->setStreet('test');
         self::assertSame('test', $address->getStreet());
@@ -74,6 +81,10 @@ class TransferServiceTest extends TestCase
 
         $country->setIso('de_DE');
         self::assertSame('de_DE', $country->getIso());
+
+        $date = new \DateTime();
+        $country->setCreatedAt($date);
+        self::assertSame($date->format('Y-m-d'), $country->getCreatedAt()->format('Y-m-d'));
 
         $address->setCountry($country);
         self::assertSame($country, $address->getCountry());
@@ -101,5 +112,20 @@ class TransferServiceTest extends TestCase
 
         $user->addRole('ROLE_ADMIN');
         self::assertSame(['ROLE_USER', 'ROLE_ADMIN'], $user->getRoles());
+
+        $foo->setBar([
+            'foo' => 'bar',
+        ]);
+        self::assertSame(['foo' => 'bar'], $foo->getBar());
+        $foo->setBar([]);
+        $foo->addBar('baaaar');
+        self::assertSame('baaaar', reset($foo->getBar()));
+
+        $this->transferService->clean($config);
+
+        self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/AddressTransfer.php');
+        self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/UserTransfer.php');
+        self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/CountryTransfer.php');
+        self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/FooTransfer.php');
     }
 }

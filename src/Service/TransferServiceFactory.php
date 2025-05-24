@@ -8,17 +8,14 @@ use PhilippHermes\TransferBundle\Service\Model\Cleaner\TransferCleaner;
 use PhilippHermes\TransferBundle\Service\Model\Cleaner\TransferCleanerInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generator\Generator;
 use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorInterface;
-use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorSteps\ClassEndGeneratorStep;
-use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorSteps\ClassGeneratorStep;
-use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorSteps\GeneratorStepInterface;
-use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorSteps\GetterGeneratorStep;
-use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorSteps\PropertyGeneratorStep;
-use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorSteps\SensitiveGeneratorStep;
-use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorSteps\SetterGeneratorStep;
-use PhilippHermes\TransferBundle\Service\Model\Generator\Helper\GeneratorHelper;
-use PhilippHermes\TransferBundle\Service\Model\Generator\Helper\GeneratorHelperInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\AdderPropertyGeneratorStep;
+use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\GetterPropertyGeneratorStep;
+use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyPropertyGeneratorStep;
+use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\SetterPropertyGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Parser\TransferParser;
 use PhilippHermes\TransferBundle\Service\Model\Parser\TransferParserInterface;
+use PhilippHermes\TransferBundle\Service\Model\Type\PropertyTypeMapper;
 
 class TransferServiceFactory
 {
@@ -27,50 +24,39 @@ class TransferServiceFactory
      */
     public function createGenerator(): GeneratorInterface
     {
+        //TODO cleaner
+
         return new Generator(
-            $this->createTransferParser(),
-            $this->createTransferCleaner(),
-            $this->createGeneratorHelper(),
-            $this->createGeneratorSteps(),
+            $this->createPropertyGeneratorSteps(),
         );
     }
 
     /**
      * @return TransferParserInterface
      */
-    protected function createTransferParser(): TransferParserInterface
+    public function createTransferParser(): TransferParserInterface
     {
-        return new TransferParser();
+        return new TransferParser(new PropertyTypeMapper());
     }
 
     /**
      * @return TransferCleanerInterface
      */
-    protected function createTransferCleaner(): TransferCleanerInterface
+    public function createTransferCleaner(): TransferCleanerInterface
     {
         return new TransferCleaner();
     }
 
     /**
-     * @return GeneratorHelperInterface
+     * @return array<PropertyGeneratorStepInterface>
      */
-    protected function createGeneratorHelper(): GeneratorHelperInterface
-    {
-        return new GeneratorHelper();
-    }
-
-    /**
-     * @return array<GeneratorStepInterface>
-     */
-    protected function createGeneratorSteps(): array
+    protected function createPropertyGeneratorSteps(): array
     {
         return [
-            new ClassGeneratorStep(),
-            new PropertyGeneratorStep(),
-            new GetterGeneratorStep(),
-            new SetterGeneratorStep(),
-            new SensitiveGeneratorStep(),
-            new ClassEndGeneratorStep(),
+            new PropertyPropertyGeneratorStep(),
+            new GetterPropertyGeneratorStep(),
+            new SetterPropertyGeneratorStep(),
+            new AdderPropertyGeneratorStep(),
         ];
     }
 }

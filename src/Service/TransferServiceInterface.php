@@ -12,5 +12,20 @@ interface TransferServiceInterface
      *
      * @return TransferCollectionTransfer
      */
-    public function generate(GeneratorConfigTransfer $generatorConfigTransfer): TransferCollectionTransfer;
+    public function parse(GeneratorConfigTransfer $generatorConfigTransfer): TransferCollectionTransfer;
+
+    /**
+     * @param GeneratorConfigTransfer $generatorConfigTransfer
+     * @param TransferCollectionTransfer $transferCollectionTransfer
+     *
+     * @return void
+     */
+    public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer): void;
+
+    /**
+     * @param GeneratorConfigTransfer $generatorConfigTransfer
+     *
+     * @return void
+     */
+    public function clean(GeneratorConfigTransfer $generatorConfigTransfer): void;
 }
