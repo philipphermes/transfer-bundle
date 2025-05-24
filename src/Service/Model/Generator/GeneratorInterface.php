@@ -11,8 +11,11 @@ interface GeneratorInterface
 {
     /**
      * @param GeneratorConfigTransfer $generatorConfigTransfer
-     *
-     * @return TransferCollectionTransfer
+     * @param TransferCollectionTransfer $transferCollectionTransfer
+     * @return void
      */
-    public function generate(GeneratorConfigTransfer $generatorConfigTransfer): TransferCollectionTransfer;
+    public function generate(
+        GeneratorConfigTransfer $generatorConfigTransfer,
+        TransferCollectionTransfer $transferCollectionTransfer,
+    ): void;
 }

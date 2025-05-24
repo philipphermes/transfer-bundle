@@ -10,12 +10,15 @@ use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(name: 'transfer:generate', description: 'Generate Transfers from XML schemas')]
 class TransferGenerateCommand extends Command
 {
+    protected const string OPTION_DISABLE_CLEAN = 'clean-disable';
+
     protected GeneratorConfigTransfer $generatorConfig;
 
     /**
@@ -46,7 +49,8 @@ class TransferGenerateCommand extends Command
     {
         $this
             ->setName('transfer:generate')
-            ->setDescription('generates transfers from xml schema');
+            ->setDescription('generates transfers from xml schema')
+            ->addOption(self::OPTION_DISABLE_CLEAN, mode: InputOption::VALUE_NONE);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -54,21 +58,37 @@ class TransferGenerateCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Transfer Generator');
 
-        $io->info(sprintf('Reading dir: %s', $this->generatorConfig->getSchemaDirectory()));
+        $io->info(sprintf('Searching dirs: %s', $this->generatorConfig->getSchemaDirectory()));
 
-        $transferCollectionTransfer = $this->transferService->generate($this->generatorConfig);
+        $transferCollectionTransfer = $this->transferService->parse($this->generatorConfig);
 
-        $transfers = array_map(
+        if ($transferCollectionTransfer->getErrors()) {
+            foreach ($transferCollectionTransfer->getErrors() as $error) {
+                $io->error($error);
+            }
+
+            return Command::FAILURE;
+        }
+
+        if (!$input->getOption(self::OPTION_DISABLE_CLEAN)) {
+            $this->transferService->clean($this->generatorConfig);
+        }
+
+        $generatingTransfersMessage = array_map(
             fn (TransferTransfer $transferTransfer) => '* ' . $transferTransfer->getName(),
             $transferCollectionTransfer->getTransfers()->getArrayCopy(),
         );
 
         array_unshift(
-            $transfers,
-            sprintf('Transfers generated in dir: %s', $this->generatorConfig->getOutputDirectory())
+            $generatingTransfersMessage,
+            sprintf('Generating transfers:')
         );
 
-        $io->info($transfers);
+        $io->info($generatingTransfersMessage);
+
+        $this->transferService->generate($this->generatorConfig, $transferCollectionTransfer);
+
+        $io->success(sprintf('Transfers generated in dir: %s', $this->generatorConfig->getOutputDirectory()));
 
         return Command::SUCCESS;
     }

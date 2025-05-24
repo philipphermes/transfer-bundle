@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:noNamespaceSchemaLocation="../../src/Resources/schema/transfer.xsd">
+           xsi:noNamespaceSchemaLocation="../../../../src/Resources/schema/transfer.xsd">
 
     <transfer name="Address">
         <property name="zip" type="int"/>

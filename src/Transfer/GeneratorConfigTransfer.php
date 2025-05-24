@@ -12,6 +12,9 @@ class GeneratorConfigTransfer
 
     protected string $namespace;
 
+    /**
+     * @return string
+     */
     public function getSchemaDirectory(): string
     {
         return $this->schemaDirectory;
@@ -19,13 +22,11 @@ class GeneratorConfigTransfer
 
     /**
      * @param string $schemaDirectory
-     *
-     * @return self
+     * @return GeneratorConfigTransfer
      */
-    public function setSchemaDirectory(string $schemaDirectory): self
+    public function setSchemaDirectory(string $schemaDirectory): GeneratorConfigTransfer
     {
         $this->schemaDirectory = $schemaDirectory;
-
         return $this;
     }
 
@@ -39,13 +40,11 @@ class GeneratorConfigTransfer
 
     /**
      * @param string $outputDirectory
-     *
-     * @return self
+     * @return GeneratorConfigTransfer
      */
-    public function setOutputDirectory(string $outputDirectory): self
+    public function setOutputDirectory(string $outputDirectory): GeneratorConfigTransfer
     {
         $this->outputDirectory = $outputDirectory;
-
         return $this;
     }
 
@@ -59,13 +58,11 @@ class GeneratorConfigTransfer
 
     /**
      * @param string $namespace
-     *
-     * @return self
+     * @return GeneratorConfigTransfer
      */
-    public function setNamespace(string $namespace): self
+    public function setNamespace(string $namespace): GeneratorConfigTransfer
     {
         $this->namespace = $namespace;
-
         return $this;
     }
 }

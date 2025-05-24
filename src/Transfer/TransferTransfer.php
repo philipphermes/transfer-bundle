@@ -22,6 +22,8 @@ class TransferTransfer
      */
     protected ArrayObject $sensitiveProperties;
 
+    protected ?PropertyTransfer $identifierProperty = null;
+
     /**
      * @return string
      */
@@ -32,13 +34,11 @@ class TransferTransfer
 
     /**
      * @param string $name
-     *
-     * @return self
+     * @return TransferTransfer
      */
-    public function setName(string $name): self
+    public function setName(string $name): TransferTransfer
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -52,13 +52,11 @@ class TransferTransfer
 
     /**
      * @param string $type
-     *
-     * @return self
+     * @return TransferTransfer
      */
-    public function setType(string $type): self
+    public function setType(string $type): TransferTransfer
     {
         $this->type = $type;
-
         return $this;
     }
 
@@ -67,38 +65,28 @@ class TransferTransfer
      */
     public function getProperties(): ArrayObject
     {
-        if (!isset($this->properties)) {
-            return new ArrayObject();
-        }
-
+        if (!isset($this->properties)) $this->properties = new ArrayObject();
         return $this->properties;
     }
 
     /**
      * @param ArrayObject<array-key, PropertyTransfer> $properties
-     *
-     * @return self
+     * @return TransferTransfer
      */
-    public function setProperties(ArrayObject $properties): self
+    public function setProperties(ArrayObject $properties): TransferTransfer
     {
         $this->properties = $properties;
-
         return $this;
     }
 
     /**
      * @param PropertyTransfer $property
-     *
-     * @return self
+     * @return $this
      */
-    public function addProperty(PropertyTransfer $property): self
+    public function addProperty(PropertyTransfer $property): TransferTransfer
     {
-        if (!isset($this->properties)) {
-            $this->properties = new ArrayObject();
-        }
-
+        if (!isset($this->properties)) $this->properties = new ArrayObject();
         $this->properties->append($property);
-
         return $this;
     }
 
@@ -107,38 +95,46 @@ class TransferTransfer
      */
     public function getSensitiveProperties(): ArrayObject
     {
-        if (!isset($this->sensitiveProperties)) {
-            return new ArrayObject();
-        }
-
+        if (!isset($this->sensitiveProperties)) $this->sensitiveProperties = new ArrayObject();
         return $this->sensitiveProperties;
     }
 
     /**
-     * @param ArrayObject<array-key, PropertyTransfer> $properties
-     *
-     * @return self
+     * @param ArrayObject<array-key, PropertyTransfer> $sensitiveProperties
+     * @return TransferTransfer
      */
-    public function setSensitiveProperties(ArrayObject $properties): self
+    public function setSensitiveProperties(ArrayObject $sensitiveProperties): TransferTransfer
     {
-        $this->sensitiveProperties = $properties;
-
+        $this->sensitiveProperties = $sensitiveProperties;
         return $this;
     }
 
     /**
      * @param PropertyTransfer $property
-     *
-     * @return self
+     * @return $this
      */
-    public function addSensitiveProperty(PropertyTransfer $property): self
+    public function addSensitiveProperty(PropertyTransfer $property): TransferTransfer
     {
-        if (!isset($this->sensitiveProperties)) {
-            $this->sensitiveProperties = new ArrayObject();
-        }
-
+        if (!isset($this->sensitiveProperties)) $this->sensitiveProperties = new ArrayObject();
         $this->sensitiveProperties->append($property);
+        return $this;
+    }
 
+    /**
+     * @return PropertyTransfer|null
+     */
+    public function getIdentifierProperty(): ?PropertyTransfer
+    {
+        return $this->identifierProperty;
+    }
+
+    /**
+     * @param PropertyTransfer|null $identifierProperty
+     * @return TransferTransfer
+     */
+    public function setIdentifierProperty(?PropertyTransfer $identifierProperty): TransferTransfer
+    {
+        $this->identifierProperty = $identifierProperty;
         return $this;
     }
 }
