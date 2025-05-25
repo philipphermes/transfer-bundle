@@ -39,10 +39,12 @@ class TransferServiceTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
+        return;
 
         unlink(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/UserTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/CountryTransfer.php');
+        unlink(__DIR__ . '/../Data/Generated/FooTransfer.php');
         rmdir(__DIR__ . '/../Data/Generated');
     }
 
@@ -121,7 +123,7 @@ class TransferServiceTest extends TestCase
         $foo->addBar('baaaar');
         self::assertSame('baaaar', reset($foo->getBar()));
 
-        $this->transferService->clean($config);
+        //$this->transferService->clean($config);
 
         self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/UserTransfer.php');

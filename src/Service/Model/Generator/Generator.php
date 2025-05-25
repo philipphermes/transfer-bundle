@@ -54,10 +54,11 @@ class Generator implements GeneratorInterface
 
         $class = $namespace->addClass($transfer->getName() . 'Transfer');
         $this->generateInheritance($transfer, $class);
+        $this->generateAnnotations($transfer, $class);
 
         foreach ($transfer->getProperties() as $property) {
             foreach ($this->propertyGeneratorSteps as $propertyGeneratorStep) {
-                $propertyGeneratorStep->generate($property, $class);
+                $propertyGeneratorStep->generate($transfer, $property, $class);
             }
 
             if ($property->isIdentifier()) {
@@ -94,6 +95,10 @@ class Generator implements GeneratorInterface
                 $namespace->addUse($propertyTransfer->getSingularType());
             }
         }
+
+        if ($transfer->isApi()) {
+            $namespace->addUse('OpenApi\Annotations', 'OA');
+        }
     }
 
     /**
@@ -120,13 +125,32 @@ class Generator implements GeneratorInterface
     /**
      * @param TransferTransfer $transfer
      * @param ClassType $class
+     *
+     * @return void
+     */
+    protected function generateAnnotations(TransferTransfer $transfer, ClassType $class): void
+    {
+        if (!$transfer->isApi()) {
+            return;
+        }
+
+        $class->addComment(
+            sprintf('@OA\Schema(schema="%s", title="%s", type="object")',
+            $transfer->getName(),
+            $transfer->getName(),
+        ));
+    }
+
+    /**
+     * @param TransferTransfer $transfer
+     * @param ClassType $class
      * @return void
      */
     protected function generateUserProperties(
         TransferTransfer $transfer,
         ClassType $class,
     ): void {
-        if ($transfer->getType() !== 'user' || !$transfer->getIdentifierProperty()?->getName()) { //TODO validate
+        if ($transfer->getType() !== 'user' || !$transfer->getIdentifierProperty()?->getName()) {
             return;
         }
 

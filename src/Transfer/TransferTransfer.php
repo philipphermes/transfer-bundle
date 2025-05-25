@@ -24,6 +24,8 @@ class TransferTransfer
 
     protected ?PropertyTransfer $identifierProperty = null;
 
+    protected bool $isApi = false;
+
     /**
      * @return string
      */
@@ -135,6 +137,24 @@ class TransferTransfer
     public function setIdentifierProperty(?PropertyTransfer $identifierProperty): TransferTransfer
     {
         $this->identifierProperty = $identifierProperty;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isApi(): bool
+    {
+        return $this->isApi;
+    }
+
+    /**
+     * @param bool $isApi
+     * @return TransferTransfer
+     */
+    public function setIsApi(bool $isApi): TransferTransfer
+    {
+        $this->isApi = $isApi;
         return $this;
     }
 }

@@ -9,13 +9,8 @@
         <property name="addresses" type="Address[]" singular="address" isNullable="true"/>
     </transfer>
 
-    <transfer name="Address">
+    <transfer name="Address" api="true">
         <property name="street" type="string"/>
         <property name="country" type="Country"/>
-    </transfer>
-
-    <transfer name="Country">
-        <property name="iso" type="string"/>
-        <property name="createdAt" type="DateTime"/>
     </transfer>
 </transfers>

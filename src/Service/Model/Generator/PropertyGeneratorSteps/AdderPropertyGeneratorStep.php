@@ -6,13 +6,14 @@ namespace PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGenerator
 
 use Nette\PhpGenerator\ClassType;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 
 class AdderPropertyGeneratorStep implements PropertyGeneratorStepInterface
 {
     /**
      * @inheritDoc
      */
-    public function generate(PropertyTransfer $propertyTransfer, ClassType $class): void
+    public function generate(TransferTransfer $transferTransfer, PropertyTransfer $propertyTransfer, ClassType $class): void
     {
         if (!$propertyTransfer->getSingularType()) {
             return;

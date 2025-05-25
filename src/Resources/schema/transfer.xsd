@@ -48,6 +48,7 @@
                         </xs:sequence>
                         <xs:attribute name="name" type="xs:string"/>
                         <xs:attribute name="type" type="transferTypes" default="default" use="optional"/>
+                        <xs:attribute name="api" type="xs:boolean" default="false" use="optional"/>
                     </xs:complexType>
                 </xs:element>
             </xs:sequence>
