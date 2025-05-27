@@ -97,7 +97,7 @@ class Generator implements GeneratorInterface
         }
 
         if ($transfer->isApi()) {
-            $namespace->addUse('OpenApi\Annotations', 'OA');
+            $namespace->addUse('OpenApi\Attributes', 'OA');
         }
     }
 
@@ -134,11 +134,14 @@ class Generator implements GeneratorInterface
             return;
         }
 
-        $class->addComment(
-            sprintf('@OA\Schema(schema="%s", title="%s", type="object")',
-            $transfer->getName(),
-            $transfer->getName(),
-        ));
+        $class->addAttribute(
+            'OpenApi\Attributes\Schema',
+            [
+                'schema' => $transfer->getName(),
+                'title' => $transfer->getName(),
+                'type' => 'object',
+            ]
+        );
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps;
 
 use Nette\PhpGenerator\ClassType;
+use OpenApi\Attributes\Items;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 
@@ -21,7 +22,10 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
         $property->addComment('@var ' . $propertyTransfer->getAnnotationType() . ($propertyTransfer->isNullable() ? '|null' : ''));
 
         if ($transferTransfer->isApi()) {
-            $property->addComment($this->resolveOAAnnotation($propertyTransfer));
+            $property->addAttribute(
+                'OpenApi\Attributes\Property',
+                $this->resolveOAAttributeArguments($propertyTransfer),
+            );
         }
 
         if ($propertyTransfer->isNullable()) {
@@ -33,43 +37,47 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
         }
     }
 
-    protected function resolveOAAnnotation(PropertyTransfer $propertyTransfer): string
+    /**
+     * @param PropertyTransfer $propertyTransfer
+     *
+     * @return array<string, mixed>
+     */
+    protected function resolveOAAttributeArguments(PropertyTransfer $propertyTransfer): array
     {
         $type = $this->resolveOAType($propertyTransfer->getType());
         $singularType = $propertyTransfer->getSingularType() ? $this->resolveOAType($propertyTransfer->getSingularType()) : null;
 
-        $annotation = '';
+        $arguments = [];
 
         if (str_contains($propertyTransfer->getType(), 'Transfer')) {
-            $annotation = sprintf(
-                'ref="#/components/schemas/%s"',
-                $this->resolveTransferType($propertyTransfer->getType()),
+            $arguments['ref'] = sprintf(
+                    '#/components/schemas/%s',
+                    $this->resolveTransferType($propertyTransfer->getType()),
             );
         } else {
-            $annotation = sprintf('type="%s"', $type);
+            $arguments['type'] = $type;
         }
 
         if ($singularType) {
-            $annotation = sprintf(
-                '@OA\Items(%s)',
-                str_contains($propertyTransfer->getSingularType(), 'Transfer')
-                ? 'ref="#/components/schemas/' . $this->resolveTransferType($propertyTransfer->getSingularType()) . '"'
-                : 'property="' . $singularType . '"',
-            );
+            if (str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
+                $arguments['items'] = new Items(ref: sprintf(
+                    '#/components/schemas/%s',
+                    $this->resolveTransferType($propertyTransfer->getSingularType()),
+                ));
+            } else {
+                $arguments['items'] = new Items(type: $singularType);
+            }
         }
 
         if ($propertyTransfer->getType() === 'DateTime' || $propertyTransfer->getType() === 'DateTimeImmutable') {
-            $annotation .= ', format="date-time"';
+            $arguments['format'] = 'date-time';
         }
 
         if ($propertyTransfer->isNullable()) {
-            $annotation .= ', nullable="true"';
+            $arguments['nullable'] = true;
         }
 
-        return sprintf(
-            '@OA\Property(%s)',
-            $annotation,
-        );
+        return $arguments;
     }
 
     /**

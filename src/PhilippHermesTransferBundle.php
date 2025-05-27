@@ -66,4 +66,54 @@ class PhilippHermesTransferBundle extends AbstractBundle
             ->setArgument('$outputDir', '%transfer.output_dir%')
             ->setArgument('$namespace', '%transfer.namespace%');
     }
+
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    {
+        $outputDir = $builder->getParameter('transfer.output_dir');
+        $namespace = $builder->getParameter('transfer.namespace');
+
+        if (!is_dir($outputDir)) {
+            return;
+        }
+
+        $models = [];
+
+        foreach (glob($outputDir . '/*Transfer.php') as $filePath) {
+            $className = $this->classFromPath($filePath, $namespace, $outputDir);
+
+            if (!class_exists($className)) {
+                require_once $filePath;
+            }
+
+            $alias = (new \ReflectionClass($className))->getShortName();
+            $alias = preg_replace('/Transfer$/', '', $alias);
+
+            $models[] = [
+                'alias' => $alias,
+                'type' => $className,
+            ];
+        }
+
+        if ($models !== []) {
+            $builder->prependExtensionConfig('nelmio_api_doc', [
+                'models' => [
+                    'names' => $models,
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * @param string $filePath
+     * @param string $namespace
+     * @param string $basePath
+     *
+     * @return string
+     */
+    private function classFromPath(string $filePath, string $namespace, string $basePath): string
+    {
+        $relativePath = str_replace([$basePath, '/', '.php'], ['', '\\', ''], $filePath);
+        return $namespace . '\\' . $relativePath;
+    }
+
 }
