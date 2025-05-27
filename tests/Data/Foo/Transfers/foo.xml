@@ -2,8 +2,13 @@
 <transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="../../../../src/Resources/schema/transfer.xsd">
 
-    <transfer name="Foo">
+    <transfer name="Foo" api="true">
         <property name="bar" type="string[]"/>
+        <property name="BarObject" type="Bar[]"/>
+    </transfer>
+
+    <transfer name="Bar" api="true">
+        <property name="text" type="string"/>
     </transfer>
 
 </transfers>

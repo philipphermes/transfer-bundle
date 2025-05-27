@@ -123,7 +123,7 @@ class TransferServiceTest extends TestCase
         $foo->addBar('baaaar');
         self::assertSame('baaaar', reset($foo->getBar()));
 
-        $this->transferService->clean($config);
+        //$this->transferService->clean($config);
 
         self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/AddressTransfer.php');
         self::assertFileDoesNotExist(__DIR__ . '/../Data/Generated/UserTransfer.php');
