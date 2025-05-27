@@ -70,11 +70,19 @@ class PhilippHermesTransferBundle extends AbstractBundle
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        $configs = $builder->getExtensionConfig($this->extensionAlias);
-        $config = array_replace_recursive(...$configs);
 
-        $outputDir = $config['output_dir'] ?? null;
-        $namespace = $config['namespace'] ?? null;
+        try {
+            $outputDir = $builder->getParameter('transfer.output_dir');
+        } catch (\Exception) {
+            $projectDir = $builder->getParameter('kernel.project_dir');
+            $outputDir = $projectDir . '/src/Generated/Transfers';
+        }
+
+        try {
+            $namespace = $builder->getParameter('transfer.namespace');
+        } catch (\Exception) {
+            $namespace = 'App\\Generated\\Transfers';
+        }
 
         if (!$outputDir || !$namespace || !is_dir($outputDir)) {
             return;
@@ -85,6 +93,11 @@ class PhilippHermesTransferBundle extends AbstractBundle
         foreach (glob($outputDir . '/*Transfer.php') as $filePath) {
             $className = $this->classFromPath($filePath, $namespace, $outputDir);
             $alias = $this->aliasFromPath($filePath);
+
+            $data = file_get_contents($filePath);
+            if (!str_contains($data, 'use OpenApi\Attributes as OA;')) {
+                continue;
+            }
 
             $models[] = [
                 'alias' => $alias,
@@ -105,7 +118,7 @@ class PhilippHermesTransferBundle extends AbstractBundle
     {
         $relativePath = str_replace([$outputDir, '/', '.php'], ['', '\\', ''], $filePath);
 
-        return $namespace . '\\' . $relativePath;
+        return $namespace . $relativePath;
     }
 
     protected function aliasFromPath(string $filePath): string
