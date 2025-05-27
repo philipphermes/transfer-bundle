@@ -62,7 +62,7 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
         if ($singularType) {
             if (str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
                 $arguments['items'] = new Literal(
-                    'OpenApi\Attributes\Items',
+                    'new \OpenApi\Attributes\Items(ref: %ref)',
                     [
                         'ref' => sprintf(
                             '#/components/schemas/%s',
@@ -72,7 +72,7 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
                 );
             } else {
                 $arguments['items'] = new Literal(
-                    'OpenApi\Attributes\Items',
+                    'new \OpenApi\Attributes\Items(type: %type)',
                     [
                         'type' => $singularType,
                     ],
