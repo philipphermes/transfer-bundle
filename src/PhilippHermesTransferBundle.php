@@ -72,10 +72,10 @@ class PhilippHermesTransferBundle extends AbstractBundle
         $configs = $builder->getExtensionConfig($this->extensionAlias);
         $config = array_replace_recursive(...$configs);
 
-        $outputDir = $config['output_dir'];
-        $namespace = $config['namespace'];
+        $outputDir = $config['output_dir'] ?? null;
+        $namespace = $config['namespace'] ?? null;
 
-        if (!is_dir($outputDir)) {
+        if (!$outputDir || !$namespace || !is_dir($outputDir)) {
             return;
         }
 
