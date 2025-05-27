@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps;
 
 use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\Literal;
 use OpenApi\Attributes\Items;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
@@ -60,12 +61,22 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
 
         if ($singularType) {
             if (str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
-                $arguments['items'] = new Items(ref: sprintf(
-                    '#/components/schemas/%s',
-                    $this->resolveTransferType($propertyTransfer->getSingularType()),
-                ));
+                $arguments['items'] = new Literal(
+                    'OpenApi\Attributes\Items',
+                    [
+                        'ref' => sprintf(
+                            '#/components/schemas/%s',
+                            $this->resolveTransferType($propertyTransfer->getSingularType()),
+                        ),
+                    ],
+                );
             } else {
-                $arguments['items'] = new Items(type: $singularType);
+                $arguments['items'] = new Literal(
+                    'OpenApi\Attributes\Items',
+                    [
+                        'type' => $singularType,
+                    ],
+                );
             }
         }
 

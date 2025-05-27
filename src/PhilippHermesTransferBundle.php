@@ -67,7 +67,7 @@ class PhilippHermesTransferBundle extends AbstractBundle
             ->setArgument('$namespace', '%transfer.namespace%');
     }
 
-    /*
+
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $configs = $builder->getExtensionConfig($this->extensionAlias);
@@ -113,5 +113,5 @@ class PhilippHermesTransferBundle extends AbstractBundle
         $filename = basename($filePath, '.php');
 
         return preg_replace('/Transfer$/', '', $filename);
-    }*/
+    }
 }
