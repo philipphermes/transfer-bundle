@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace PhilippHermes\TransferBundle;
 
 use PhilippHermes\TransferBundle\Command\TransferGenerateCommand;
+use PhilippHermes\TransferBundle\Service\DependencyInjection\Compiler\RegisterTransferModelsCompilerPass;
 use PhilippHermes\TransferBundle\Service\TransferService;
 use PhilippHermes\TransferBundle\Service\TransferServiceFactory;
 use PhilippHermes\TransferBundle\Service\TransferServiceInterface;
@@ -67,51 +68,10 @@ class PhilippHermesTransferBundle extends AbstractBundle
             ->setArgument('$namespace', '%transfer.namespace%');
     }
 
-
-    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    public function build(ContainerBuilder $container): void
     {
-        $configs = $builder->getExtensionConfig($this->extensionAlias);
-        $config = array_replace_recursive(...$configs);
+        parent::build($container);
 
-        $outputDir = $config['output_dir'] ?? null;
-        $namespace = $config['namespace'] ?? null;
-
-        if (!$outputDir || !$namespace || !is_dir($outputDir)) {
-            return;
-        }
-
-        $models = [];
-
-        foreach (glob($outputDir . '/*Transfer.php') as $filePath) {
-            $className = $this->classFromPath($filePath, $namespace, $outputDir);
-            $alias = $this->aliasFromPath($filePath);
-
-            $models[] = [
-                'alias' => $alias,
-                'type' => $className,
-            ];
-        }
-
-        if ($models !== []) {
-            $builder->prependExtensionConfig('nelmio_api_doc', [
-                'models' => [
-                    'names' => $models,
-                ],
-            ]);
-        }
-    }
-
-    protected function classFromPath(string $filePath, string $namespace, string $outputDir): string
-    {
-        $relativePath = str_replace([$outputDir, '/', '.php'], ['', '\\', ''], $filePath);
-
-        return $namespace . '\\' . $relativePath;
-    }
-
-    protected function aliasFromPath(string $filePath): string
-    {
-        $filename = basename($filePath, '.php');
-
-        return preg_replace('/Transfer$/', '', $filename);
+        $container->addCompilerPass(new RegisterTransferModelsCompilerPass());
     }
 }
