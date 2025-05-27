@@ -83,13 +83,7 @@ class PhilippHermesTransferBundle extends AbstractBundle
 
         foreach (glob($outputDir . '/*Transfer.php') as $filePath) {
             $className = $this->classFromPath($filePath, $namespace, $outputDir);
-
-            if (!class_exists($className)) {
-                require_once $filePath;
-            }
-
-            $alias = (new \ReflectionClass($className))->getShortName();
-            $alias = preg_replace('/Transfer$/', '', $alias);
+            $alias = $this->aliasFromPath($filePath);
 
             $models[] = [
                 'alias' => $alias,
@@ -106,17 +100,17 @@ class PhilippHermesTransferBundle extends AbstractBundle
         }
     }
 
-    /**
-     * @param string $filePath
-     * @param string $namespace
-     * @param string $basePath
-     *
-     * @return string
-     */
-    private function classFromPath(string $filePath, string $namespace, string $basePath): string
+    protected function classFromPath(string $filePath, string $namespace, string $outputDir): string
     {
-        $relativePath = str_replace([$basePath, '/', '.php'], ['', '\\', ''], $filePath);
+        $relativePath = str_replace([$outputDir, '/', '.php'], ['', '\\', ''], $filePath);
+
         return $namespace . '\\' . $relativePath;
     }
 
+    protected function aliasFromPath(string $filePath): string
+    {
+        $filename = basename($filePath, '.php');
+
+        return preg_replace('/Transfer$/', '', $filename);
+    }
 }
