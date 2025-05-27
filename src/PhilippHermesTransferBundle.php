@@ -69,8 +69,11 @@ class PhilippHermesTransferBundle extends AbstractBundle
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        $outputDir = $builder->getParameter('%transfer.output_dir%');
-        $namespace = $builder->getParameter('%transfer.namespace%');
+        $configs = $builder->getExtensionConfig($this->extensionAlias);
+        $config = array_replace_recursive(...$configs);
+
+        $outputDir = $config['output_dir'];
+        $namespace = $config['namespace'];
 
         if (!is_dir($outputDir)) {
             return;
