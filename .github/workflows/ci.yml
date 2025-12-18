@@ -10,10 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  codecheck:
+  phpstan:
     runs-on: ubuntu-latest
     steps:
-      - uses: shivammathur/setup-php@2cb9b829437ee246e9b3cac53555a39208ca6d28
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
       - uses: actions/checkout@v3
@@ -31,13 +31,16 @@ jobs:
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: PHPStan
-        run: composer phpstan
+        run: vendor/bin/phpstan analyse --memory-limit=1G
+
   test:
+    needs: [phpstan]
     runs-on: ubuntu-latest
     steps:
-      - uses: shivammathur/setup-php@2cb9b829437ee246e9b3cac53555a39208ca6d28
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          coverage: xdebug
       - uses: actions/checkout@v3
 
       - name: Cache Composer packages
@@ -53,4 +56,12 @@ jobs:
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: PHPUnit
-        run: composer test
+        run: vendor/bin/phpunit --coverage-html coverage-report
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage-report/
+          retention-days: 30
