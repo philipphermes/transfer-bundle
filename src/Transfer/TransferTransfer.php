@@ -10,8 +10,6 @@ class TransferTransfer
 {
     protected string $name;
 
-    protected string $type;
-
     /**
      * @var ArrayObject<array-key, PropertyTransfer>
      */
@@ -41,24 +39,6 @@ class TransferTransfer
     public function setName(string $name): TransferTransfer
     {
         $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getType(): string
-    {
-        return $this->type;
-    }
-
-    /**
-     * @param string $type
-     * @return TransferTransfer
-     */
-    public function setType(string $type): TransferTransfer
-    {
-        $this->type = $type;
         return $this;
     }
 

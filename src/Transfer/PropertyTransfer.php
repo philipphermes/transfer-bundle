@@ -8,14 +8,13 @@ class PropertyTransfer
 {
     protected string $name;
     protected ?string $singular = null;
+
     protected string $type;
     protected ?string $singularType = null;
     protected string $annotationType;
     protected ?string $singularAnnotationType = null;
     protected ?string $description = null;
     protected bool $isNullable = false;
-    protected bool $isIdentifier = false;
-    protected bool $isSensitive = false;
 
     /**
      * @return string
@@ -158,42 +157,6 @@ class PropertyTransfer
     public function setIsNullable(bool $isNullable): PropertyTransfer
     {
         $this->isNullable = $isNullable;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isIdentifier(): bool
-    {
-        return $this->isIdentifier;
-    }
-
-    /**
-     * @param bool $isIdentifier
-     * @return PropertyTransfer
-     */
-    public function setIsIdentifier(bool $isIdentifier): PropertyTransfer
-    {
-        $this->isIdentifier = $isIdentifier;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isSensitive(): bool
-    {
-        return $this->isSensitive;
-    }
-
-    /**
-     * @param bool $isSensitive
-     * @return PropertyTransfer
-     */
-    public function setIsSensitive(bool $isSensitive): PropertyTransfer
-    {
-        $this->isSensitive = $isSensitive;
         return $this;
     }
 }

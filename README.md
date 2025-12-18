@@ -1,17 +1,16 @@
 # Transfer Bundle
 
-### Requirements:
-* php: >= 8.3
-* symfony: >= 7.2
-* ext-simplexml: *
+[![CI](https://github.com/philipphermes/transfer-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/philipphermes/transfer-bundle/actions/workflows/ci.yml)
+[![PHP](https://img.shields.io/badge/php-%3E%3D%208.4-8892BF.svg)]((https://img.shields.io/badge/php-%3E%3D%208.4-8892BF.svg))
+[![Symfony](https://img.shields.io/badge/symfony-8-8892BF.svg)]((https://img.shields.io/badge/symfony-8.0-8892BF.svg))
 
-## Usage:
+## Installation
 
 ```shell
 composer require philipphermes/transfer-bundle
 ```
 
-### Configuration:
+### Configuration
 
 ```php
 // config/bundles.php
@@ -21,12 +20,12 @@ return [
 ];
 ```
 
-#### Optional Configs:
+#### Optional Configs
 * `transfer.namespace`: `App\\Generated\\Transfers`
 * `transfer.schema_dir`: `%kernel.project_dir%/transfers`
 * `transfer.output_dir`: `%kernel.project_dir%/src/Generated/Transfers`
 
-### Define Transfers:
+### Define Transfers
 * you can create multiple files
 * if multiple files have the same transfer they will be merged
   * if you define the same property twice the first on it gets is taken
@@ -48,32 +47,6 @@ return [
     </transfer>
 </transfers>
 ```
-#### Security Bundle Integration
-If you want to use this feature make sure you have the Security Bundle installed.
-
-```shell
-composer require symfony/security-bundle
-```
-
-Then you can define your transfer eg. like this:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:noNamespaceSchemaLocation="../vendor/philipphermes/transfer-bundle/src/Resources/schema/transfer.xsd">
-
-  <transfer name="User" type="user">
-    <property name="email" type="string" isIdentifier="true"/>
-    <property name="password" type="string"/>
-    <property name="plainPassword" type="string" isSensitive="true" isNullable="true"/>
-  </transfer>
-</transfers>
-```
-
-it will implement the UserInterface and have all required methods like:
-* getUserIdentifier
-* eraseCredentials
-* get/set Roles
 
 ### Run
 ```shell

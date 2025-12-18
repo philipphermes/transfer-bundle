@@ -59,7 +59,7 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
         }
 
         if ($singularType) {
-            if (str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
+            if ($propertyTransfer->getSingularType() && str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
                 $arguments['items'] = Literal::new(
                     'OA\Items',
                     [
@@ -91,7 +91,7 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
     }
 
     /**
-     * @param PropertyTransfer $propertyTransfer
+     * @param string $type
      *
      * @return string
      */
