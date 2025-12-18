@@ -10,8 +10,6 @@ class TransferTransfer
 {
     protected string $name;
 
-    protected string $type;
-
     /**
      * @var ArrayObject<array-key, PropertyTransfer>
      */
@@ -23,6 +21,8 @@ class TransferTransfer
     protected ArrayObject $sensitiveProperties;
 
     protected ?PropertyTransfer $identifierProperty = null;
+
+    protected bool $isApi = false;
 
     /**
      * @return string
@@ -39,24 +39,6 @@ class TransferTransfer
     public function setName(string $name): TransferTransfer
     {
         $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getType(): string
-    {
-        return $this->type;
-    }
-
-    /**
-     * @param string $type
-     * @return TransferTransfer
-     */
-    public function setType(string $type): TransferTransfer
-    {
-        $this->type = $type;
         return $this;
     }
 
@@ -135,6 +117,24 @@ class TransferTransfer
     public function setIdentifierProperty(?PropertyTransfer $identifierProperty): TransferTransfer
     {
         $this->identifierProperty = $identifierProperty;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isApi(): bool
+    {
+        return $this->isApi;
+    }
+
+    /**
+     * @param bool $isApi
+     * @return TransferTransfer
+     */
+    public function setIsApi(bool $isApi): TransferTransfer
+    {
+        $this->isApi = $isApi;
         return $this;
     }
 }

@@ -60,7 +60,7 @@ readonly class TransferParser implements TransferParserInterface
                 if (!$transfer) {
                     $transfer = new TransferTransfer();
                     $transfer->setName((string)$transferElement['name']);
-                    $transfer->setType((string)($transferElement['type'] ?? 'default'));
+                    $transfer->setIsApi(isset($transferElement['api']) && ((string)$transferElement['api'] === 'true'));
                 }
 
                 foreach ($transferElement->property as $propertyElement) {
@@ -95,9 +95,7 @@ readonly class TransferParser implements TransferParserInterface
                             ->setName((string)$propertyElement['name'])
                             ->setDescription(isset($propertyElement['description']) ? (string)$propertyElement['description'] : null)
                             ->setSingular(isset($propertyElement['singular']) ? (string)$propertyElement['singular'] : null)
-                            ->setIsNullable(isset($propertyElement['isNullable']) && ((string)$propertyElement['isNullable'] === 'true'))
-                            ->setIsIdentifier(isset($propertyElement['isIdentifier']) && ((string)$propertyElement['isIdentifier'] === 'true'))
-                            ->setIsSensitive(isset($propertyElement['isSensitive']) && ((string)$propertyElement['isSensitive'] === 'true'));
+                            ->setIsNullable(isset($propertyElement['isNullable']) && ((string)$propertyElement['isNullable'] === 'true'));
 
                         $property = $this->propertyTypeMapper->addTypes($generatorConfigTransfer, $property, (string)$propertyElement['type']);
 

@@ -4,3 +4,4 @@ vendor/
 tests/data/Generated
 composer.lock
 .DS_Store
+coverage-report

@@ -2,20 +2,14 @@
 <transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="../../../../src/Resources/schema/transfer.xsd">
 
-    <transfer name="User" type="user">
-        <property name="email" type="string" isIdentifier="true"/>
+    <transfer name="User">
+        <property name="email" type="string"/>
         <property name="password" type="string"/>
-        <property name="plainPassword" type="string" isSensitive="true" isNullable="true"/>
         <property name="addresses" type="Address[]" singular="address" isNullable="true"/>
     </transfer>
 
-    <transfer name="Address">
+    <transfer name="Address" api="true">
         <property name="street" type="string"/>
         <property name="country" type="Country"/>
-    </transfer>
-
-    <transfer name="Country">
-        <property name="iso" type="string"/>
-        <property name="createdAt" type="DateTime"/>
     </transfer>
 </transfers>

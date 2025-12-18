@@ -22,7 +22,6 @@ class PhilippHermesTransferBundle extends AbstractBundle
      */
     public function configure(DefinitionConfigurator $definition): void
     {
-        /** @phpstan-ignore-next-line  */
         $definition->rootNode()
             ->children()
                 ->scalarNode('schema_dir')
@@ -39,10 +38,9 @@ class PhilippHermesTransferBundle extends AbstractBundle
     }
 
     /**
-     *
      * @inheritDoc
      *
-     * @param array<array-key, mixed> $config
+     * @param array<string, mixed> $config
      */
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
@@ -65,5 +63,85 @@ class PhilippHermesTransferBundle extends AbstractBundle
             ->setArgument('$schemaDir', '%transfer.schema_dir%')
             ->setArgument('$outputDir', '%transfer.output_dir%')
             ->setArgument('$namespace', '%transfer.namespace%');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    {
+        try {
+            $outputDir = $builder->getParameter('transfer.output_dir');
+        } catch (\Exception) {
+            $projectDir = $builder->getParameter('kernel.project_dir');
+            if (!is_string($projectDir)) {
+                return;
+            }
+            $outputDir = $projectDir . '/src/Generated/Transfers';
+        }
+
+        try {
+            $namespace = $builder->getParameter('transfer.namespace');
+        } catch (\Exception) {
+            $namespace = 'App\\Generated\\Transfers';
+        }
+
+        if (!is_string($outputDir) || !is_string($namespace) || !is_dir($outputDir)) {
+            return;
+        }
+
+        $models = [];
+        $filePaths = glob($outputDir . '/*Transfer.php');
+        if (!$filePaths) {
+            return;
+        }
+
+        foreach ($filePaths as $filePath) {
+            $className = $this->classFromPath($filePath, $namespace, $outputDir);
+
+            $data = file_get_contents($filePath);
+            if (!$data || !str_contains($data, 'use OpenApi\Attributes as OA;')) {
+                continue;
+            }
+
+            $models[] = [
+                'alias' => $this->aliasFromPath($filePath),
+                'type' => $className,
+            ];
+        }
+
+        if ($models !== []) {
+            $builder->prependExtensionConfig('nelmio_api_doc', [
+                'models' => [
+                    'names' => $models,
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * @param string $filePath
+     * @param string $namespace
+     * @param string $outputDir
+     *
+     * @return string
+     */
+    protected function classFromPath(string $filePath, string $namespace, string $outputDir): string
+    {
+        $relativePath = str_replace([$outputDir, '/', '.php'], ['', '\\', ''], $filePath);
+
+        return $namespace . $relativePath;
+    }
+
+    /**
+     * @param string $filePath
+     *
+     * @return string|null
+     */
+    protected function aliasFromPath(string $filePath): ?string
+    {
+        $filename = basename($filePath, '.php');
+
+        return preg_replace('/Transfer$/', '', $filename);
     }
 }

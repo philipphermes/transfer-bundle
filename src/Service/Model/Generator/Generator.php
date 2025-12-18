@@ -10,7 +10,6 @@ use Nette\PhpGenerator\PhpNamespace;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
 use PhilippHermes\TransferBundle\Service\Model\Type\PropertyTypeMapper;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
-use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 
@@ -33,7 +32,6 @@ class Generator implements GeneratorInterface
         TransferCollectionTransfer $transferCollectionTransfer,
     ): void {
         foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
-            $transfer = $this->addRoleProperty($transfer);
             $this->generateTransfer($generatorConfigTransfer, $transfer);
         }
     }
@@ -53,23 +51,13 @@ class Generator implements GeneratorInterface
         $this->generateUses($transfer, $namespace);
 
         $class = $namespace->addClass($transfer->getName() . 'Transfer');
-        $this->generateInheritance($transfer, $class);
+        $this->generateAnnotations($transfer, $class);
 
         foreach ($transfer->getProperties() as $property) {
             foreach ($this->propertyGeneratorSteps as $propertyGeneratorStep) {
-                $propertyGeneratorStep->generate($property, $class);
-            }
-
-            if ($property->isIdentifier()) {
-                $transfer->setIdentifierProperty($property);
-            }
-
-            if ($property->isSensitive()) {
-                $transfer->addSensitiveProperty($property);
+                $propertyGeneratorStep->generate($transfer, $property, $class);
             }
         }
-
-        $this->generateUserProperties($transfer, $class);
 
         if (!is_dir($generatorConfig->getOutputDirectory())) {
             mkdir($generatorConfig->getOutputDirectory(), 0777, true);
@@ -94,81 +82,31 @@ class Generator implements GeneratorInterface
                 $namespace->addUse($propertyTransfer->getSingularType());
             }
         }
-    }
 
-    /**
-     * @param TransferTransfer $transfer
-     * @param ClassType $class
-     * @return void
-     */
-    protected function generateInheritance(TransferTransfer $transfer, ClassType $class): void
-    {
-        if ($transfer->getType() !== 'user') {
-            return;
-        }
-
-        $class->addImplement('Symfony\Component\Security\Core\User\UserInterface');
-
-        foreach ($transfer->getProperties() as $property) {
-            if ($property->getName() === 'password') {
-                $class->addImplement('Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface');
-                break;
-            }
+        if ($transfer->isApi()) {
+            $namespace->addUse('OpenApi\Attributes', 'OA');
         }
     }
 
     /**
      * @param TransferTransfer $transfer
      * @param ClassType $class
+     *
      * @return void
      */
-    protected function generateUserProperties(
-        TransferTransfer $transfer,
-        ClassType $class,
-    ): void {
-        if ($transfer->getType() !== 'user' || !$transfer->getIdentifierProperty()?->getName()) { //TODO validate
+    protected function generateAnnotations(TransferTransfer $transfer, ClassType $class): void
+    {
+        if (!$transfer->isApi()) {
             return;
         }
 
-        $methodUserIdentifier = $class->addMethod('getUserIdentifier');
-        $methodUserIdentifier->setPublic();
-        $methodUserIdentifier->setReturnType('string');
-        $methodUserIdentifier->setComment('@return string');
-        $methodUserIdentifier->addBody('return $this->' . $transfer->getIdentifierProperty()->getName() . ';');
-
-        $methodEraseCredentials = $class->addMethod('eraseCredentials');
-        $methodEraseCredentials->setPublic();
-        $methodEraseCredentials->setReturnType('void');
-        $methodEraseCredentials->setComment('@return void');
-
-        foreach ($transfer->getSensitiveProperties() as $property) {
-            $methodEraseCredentials->addBody('$this->' . $property->getName() . ' = null;');
-        }
-    }
-
-    /**
-     * @param TransferTransfer $transfer
-     * @return TransferTransfer
-     */
-    protected function addRoleProperty(TransferTransfer $transfer): TransferTransfer
-    {
-        if ($transfer->getType() !== 'user') {
-            return $transfer;
-        }
-
-        foreach ($transfer->getProperties() as $propertyTransfer) {
-            if ($propertyTransfer->getName() === 'roles') {
-                return $transfer;
-            }
-        }
-
-        return $transfer->addProperty((new PropertyTransfer())
-            ->setName('roles')
-            ->setSingular('role')
-            ->setType('array')
-            ->setSingularType('string')
-            ->setAnnotationType('array<array-key, string>')
-            ->setSingularAnnotationType('string'),
+        $class->addAttribute(
+            'OpenApi\Attributes\Schema',
+            [
+                'schema' => $transfer->getName(),
+                'title' => $transfer->getName(),
+                'type' => 'object',
+            ]
         );
     }
 }
