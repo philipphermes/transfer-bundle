@@ -63,9 +63,6 @@ return [
 
 ### OpenAPI
 
-> [!CAUTION]
-> This currently does not work with Symfony 8
-
 you can add `api="true"` to transfers to add attributes and a ref automatically.
 child transfers won't get it automatically.
 
