@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../../../src/Resources/schema/transfer.xsd">
+
+    <transfer name="Locale">
+        <property name="code" type="string"/>
+    </transfer>
+
+    <transfer name="LocaleCollection">
+        <property name="locales" singular="locale" type="Locale[]"/>
+    </transfer>
+
+</transfers>
