@@ -39,6 +39,11 @@ readonly class TransferParser implements TransferParserInterface
             return $collection;
         }
 
+        /**
+         * @var array<string, string> $propertyTypesToResolve
+         */
+        $propertyTypesToResolve = [];
+
         foreach ($finder as $file) {
             $absoluteFilePath = $file->getRealPath();
 
@@ -90,21 +95,38 @@ readonly class TransferParser implements TransferParserInterface
                         continue;
                     }
 
-                    if (!$this->hasProperty((string)$propertyElement['name'], $transfer)) {
-                        $property = (new PropertyTransfer())
-                            ->setName((string)$propertyElement['name'])
+                    $property = (new PropertyTransfer())->setName((string)$propertyElement['name']);
+                    $propertyTypeToResolveKey = $this->getPropertyTypeToResolveKey($transfer, $property);
+
+                    if (!isset($propertyTypesToResolve[$propertyTypeToResolveKey])) {
+                        $property
                             ->setDescription(isset($propertyElement['description']) ? (string)$propertyElement['description'] : null)
                             ->setSingular(isset($propertyElement['singular']) ? (string)$propertyElement['singular'] : null)
                             ->setIsNullable(isset($propertyElement['isNullable']) && ((string)$propertyElement['isNullable'] === 'true'));
 
-                        $property = $this->propertyTypeMapper->addTypes($generatorConfigTransfer, $property, (string)$propertyElement['type']);
-
                         $transfer->addProperty($property);
+                        $propertyTypesToResolve[$propertyTypeToResolveKey] = (string)$propertyElement['type'];
                     }
                 }
 
                 if (!$this->getTransferFromCollection($transfer->getName(), $collection)) {
                     $collection->addTransfer($transfer);
+                }
+            }
+        }
+
+        $this->propertyTypeMapper->setDefinedTransfers($collection);
+
+        foreach ($collection->getTransfers() as $transfer) {
+            foreach ($transfer->getProperties() as $property) {
+                $propertyTypeToResolveKey = $this->getPropertyTypeToResolveKey($transfer, $property);
+
+                if (isset($propertyTypesToResolve[$propertyTypeToResolveKey])) {
+                    $this->propertyTypeMapper->addTypes(
+                        $generatorConfigTransfer,
+                        $property,
+                        $propertyTypesToResolve[$propertyTypeToResolveKey]
+                    );
                 }
             }
         }
@@ -144,5 +166,20 @@ readonly class TransferParser implements TransferParserInterface
         }
 
         return false;
+    }
+
+    /**
+     * @param TransferTransfer $transferTransfer
+     * @param PropertyTransfer $propertyTransfer
+     *
+     * @return string
+     */
+    protected function getPropertyTypeToResolveKey(TransferTransfer $transferTransfer, PropertyTransfer $propertyTransfer): string
+    {
+        return sprintf(
+            '%s_%s',
+            $transferTransfer->getName(),
+            $propertyTransfer->getName(),
+        );
     }
 }

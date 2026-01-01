@@ -37,6 +37,8 @@ class TransferServiceTest extends TestCase
         unlink(__DIR__ . '/../Data/Generated/UserTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/CountryTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/FooTransfer.php');
+        unlink(__DIR__ . '/../Data/Generated/LocaleTransfer.php');
+        unlink(__DIR__ . '/../Data/Generated/LocaleCollectionTransfer.php');
         rmdir(__DIR__ . '/../Data/Generated');
     }
 
@@ -61,11 +63,15 @@ class TransferServiceTest extends TestCase
         self::assertFileExists(__DIR__ . '/../Data/Generated/UserTransfer.php');
         self::assertFileExists(__DIR__ . '/../Data/Generated/CountryTransfer.php');
         self::assertFileExists(__DIR__ . '/../Data/Generated/FooTransfer.php');
+        self::assertFileExists(__DIR__ . '/../Data/Generated/LocaleTransfer.php');
+        self::assertFileExists(__DIR__ . '/../Data/Generated/LocaleCollectionTransfer.php');
 
         $user = new \PhilippHermes\TransferBundle\Tests\Data\Generated\UserTransfer();
         $address = new \PhilippHermes\TransferBundle\Tests\Data\Generated\AddressTransfer();
         $country = new \PhilippHermes\TransferBundle\Tests\Data\Generated\CountryTransfer();
         $foo = new \PhilippHermes\TransferBundle\Tests\Data\Generated\FooTransfer();
+        $locale = new \PhilippHermes\TransferBundle\Tests\Data\Generated\LocaleTransfer();
+        $localeCollection = new \PhilippHermes\TransferBundle\Tests\Data\Generated\LocaleCollectionTransfer();
 
         $address->setStreet('test');
         self::assertSame('test', $address->getStreet());
@@ -101,6 +107,12 @@ class TransferServiceTest extends TestCase
         $foo->setBar([]);
         $foo->addBar('baaaar');
         self::assertSame('baaaar', reset($foo->getBar()));
+
+        $locale->setCode('test');
+        self::assertSame('test', $locale->getCode());
+
+        $localeCollection->addLocale($locale);
+        self::assertSame('test', $localeCollection->getLocales()->offsetGet(0)->getCode());
 
         $this->transferService->clean($config);
 

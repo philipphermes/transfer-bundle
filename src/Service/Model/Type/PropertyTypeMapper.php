@@ -6,6 +6,7 @@ namespace PhilippHermes\TransferBundle\Service\Model\Type;
 
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use ReflectionClass;
 
 class PropertyTypeMapper
@@ -18,6 +19,26 @@ class PropertyTypeMapper
      * @var array<string, string>
      */
     protected static array $checkedObjects = [];
+
+    /**
+     * @var array<string, true>
+     */
+    protected array $definedTransfers = [];
+
+    /**
+     * @param TransferCollectionTransfer|null $transferCollectionTransfer
+     * @return void
+     */
+    public function setDefinedTransfers(?TransferCollectionTransfer $transferCollectionTransfer): void
+    {
+        $this->definedTransfers = [];
+        self::$checkedObjects = [];
+        if ($transferCollectionTransfer) {
+            foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
+                $this->definedTransfers[$transfer->getName()] = true;
+            }
+        }
+    }
 
     /**
      * @param PropertyTransfer $propertyTransfer
@@ -99,8 +120,12 @@ class PropertyTypeMapper
             return $type;
         }
 
-        if (in_array($type, self::$checkedObjects, true)) {
+        if (isset(self::$checkedObjects[$type])) {
             return self::$checkedObjects[$type];
+        }
+
+        if (isset($this->definedTransfers[$type])) {
+            return self::$checkedObjects[$type] = $type . 'Transfer';
         }
 
         try {
