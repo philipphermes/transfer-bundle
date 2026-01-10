@@ -50,9 +50,11 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
         $arguments = [];
 
         if (str_contains($propertyTransfer->getType(), 'Transfer')) {
-            $arguments['ref'] = sprintf(
-                    '#/components/schemas/%s',
-                    $this->resolveTransferType($propertyTransfer->getType()),
+            $arguments['ref'] = Literal::new(
+                '\Nelmio\ApiDocBundle\Attribute\Model',
+                [
+                    'type' => $propertyTransfer->getType(),
+                ]
             );
         } else {
             $arguments['type'] = $type;
