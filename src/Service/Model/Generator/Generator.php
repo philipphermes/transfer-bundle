@@ -29,9 +29,11 @@ class Generator implements GeneratorInterface
     public function generate(
         GeneratorConfigTransfer $generatorConfigTransfer,
         TransferCollectionTransfer $transferCollectionTransfer,
+        callable $progressCallback,
     ): void {
         foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
             $this->generateTransfer($generatorConfigTransfer, $transfer);
+            $progressCallback();
         }
     }
 

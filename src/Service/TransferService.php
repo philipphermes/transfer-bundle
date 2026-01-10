@@ -29,9 +29,9 @@ readonly class TransferService implements TransferServiceInterface
     /**
      * @inheritDoc
      */
-    public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer): void
+    public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer, callable $progressCallback): void
     {
-        $this->transferServiceFactory->createGenerator()->generate($generatorConfigTransfer, $transferCollectionTransfer);
+        $this->transferServiceFactory->createGenerator()->generate($generatorConfigTransfer, $transferCollectionTransfer, $progressCallback);
     }
 
     /**

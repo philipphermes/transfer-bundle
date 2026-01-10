@@ -12,10 +12,13 @@ interface GeneratorInterface
     /**
      * @param GeneratorConfigTransfer $generatorConfigTransfer
      * @param TransferCollectionTransfer $transferCollectionTransfer
+     * @param callable $progressCallback
+     *
      * @return void
      */
     public function generate(
         GeneratorConfigTransfer $generatorConfigTransfer,
         TransferCollectionTransfer $transferCollectionTransfer,
+        callable $progressCallback,
     ): void;
 }
