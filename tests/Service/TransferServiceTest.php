@@ -14,6 +14,8 @@ class TransferServiceTest extends TestCase
 {
     private TransferServiceInterface $transferService;
 
+    public int $progress = 0;
+
     /**
      * @return void
      */
@@ -37,6 +39,7 @@ class TransferServiceTest extends TestCase
         unlink(__DIR__ . '/../Data/Generated/UserTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/CountryTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/FooTransfer.php');
+        unlink(__DIR__ . '/../Data/Generated/BarTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/LocaleTransfer.php');
         unlink(__DIR__ . '/../Data/Generated/LocaleCollectionTransfer.php');
         rmdir(__DIR__ . '/../Data/Generated');
@@ -57,6 +60,7 @@ class TransferServiceTest extends TestCase
         $this->transferService->generate(
             $config,
             $transferCollection,
+            fn () => $this->progress++,
         );
 
         self::assertFileExists(__DIR__ . '/../Data/Generated/AddressTransfer.php');
@@ -72,6 +76,8 @@ class TransferServiceTest extends TestCase
         $foo = new \PhilippHermes\TransferBundle\Tests\Data\Generated\FooTransfer();
         $locale = new \PhilippHermes\TransferBundle\Tests\Data\Generated\LocaleTransfer();
         $localeCollection = new \PhilippHermes\TransferBundle\Tests\Data\Generated\LocaleCollectionTransfer();
+
+        self::assertSame(7, $this->progress);
 
         $address->setStreet('test');
         self::assertSame('test', $address->getStreet());

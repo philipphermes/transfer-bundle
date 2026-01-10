@@ -17,10 +17,11 @@ interface TransferServiceInterface
     /**
      * @param GeneratorConfigTransfer $generatorConfigTransfer
      * @param TransferCollectionTransfer $transferCollectionTransfer
+     * @param callable $progressCallback
      *
      * @return void
      */
-    public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer): void;
+    public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer, callable $progressCallback): void;
 
     /**
      * @param GeneratorConfigTransfer $generatorConfigTransfer

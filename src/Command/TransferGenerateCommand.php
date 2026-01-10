@@ -58,37 +58,53 @@ class TransferGenerateCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Transfer Generator');
 
-        $io->info(sprintf('Searching dirs: %s', $this->generatorConfig->getSchemaDirectory()));
+        $io->section('Configuration');
+        $io->definitionList(
+            ['Schema Directory' => $this->generatorConfig->getSchemaDirectory()],
+            ['Output Directory' => $this->generatorConfig->getOutputDirectory()],
+            ['Namespace' => $this->generatorConfig->getNamespace()],
+            ['Clean Output Dir' => !$input->getOption(self::OPTION_DISABLE_CLEAN)],
+        );
 
+        $io->section('Parsing Schemas');
         $transferCollectionTransfer = $this->transferService->parse($this->generatorConfig);
 
         if ($transferCollectionTransfer->getErrors()) {
+            $io->error('Errors encountered while parsing schemas');
+
             foreach ($transferCollectionTransfer->getErrors() as $error) {
-                $io->error($error);
+                $io->writeln(' - ' . $error);
             }
 
             return Command::FAILURE;
         }
 
         if (!$input->getOption(self::OPTION_DISABLE_CLEAN)) {
+            $io->info('Cleaning output directory');
             $this->transferService->clean($this->generatorConfig);
         }
 
-        $generatingTransfersMessage = array_map(
-            fn (TransferTransfer $transferTransfer) => '* ' . $transferTransfer->getName(),
-            $transferCollectionTransfer->getTransfers()->getArrayCopy(),
+        $transfers = $transferCollectionTransfer->getTransfers()->getArrayCopy();
+
+        $io->section(sprintf('Generating %d Transfers', count($transfers)));
+        $io->listing(array_map(
+            fn (TransferTransfer $t) => $t->getName(),
+            $transfers,
+        ));
+
+        $progressBar = $io->createProgressBar(count($transfers));
+        $progressBar->start();
+
+        $this->transferService->generate(
+            $this->generatorConfig,
+            $transferCollectionTransfer,
+            fn () => $progressBar->advance(),
         );
 
-        array_unshift(
-            $generatingTransfersMessage,
-            sprintf('Generating transfers:')
-        );
+        $progressBar->finish();
+        $io->newLine(2);
 
-        $io->info($generatingTransfersMessage);
-
-        $this->transferService->generate($this->generatorConfig, $transferCollectionTransfer);
-
-        $io->success(sprintf('Transfers generated in dir: %s', $this->generatorConfig->getOutputDirectory()));
+        $io->success('Transfer generation completed successfully');
 
         return Command::SUCCESS;
     }
