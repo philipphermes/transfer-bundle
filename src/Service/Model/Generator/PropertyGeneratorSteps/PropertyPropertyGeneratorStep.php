@@ -64,7 +64,7 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
                     'OA\Items',
                     [
                         'ref' => Literal::new(
-                            'Nelmio\ApiDocBundle\Attribute\Model',
+                            '\Nelmio\ApiDocBundle\Attribute\Model',
                             [
                                 'type' => $propertyTransfer->getSingularType(),
                                 'groups' => ['full'],
