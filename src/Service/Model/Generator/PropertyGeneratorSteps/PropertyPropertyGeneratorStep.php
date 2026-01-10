@@ -67,7 +67,6 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
                             '\Nelmio\ApiDocBundle\Attribute\Model',
                             [
                                 'type' => $propertyTransfer->getSingularType(),
-                                'groups' => ['full'],
                             ]
                         ),
                     ]
