@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Generator;
 
-use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
@@ -51,7 +50,6 @@ class Generator implements GeneratorInterface
         $this->generateUses($transfer, $namespace);
 
         $class = $namespace->addClass($transfer->getName() . 'Transfer');
-        $this->generateAnnotations($transfer, $class);
 
         foreach ($transfer->getProperties() as $property) {
             foreach ($this->propertyGeneratorSteps as $propertyGeneratorStep) {
@@ -86,27 +84,5 @@ class Generator implements GeneratorInterface
         if ($transfer->isApi()) {
             $namespace->addUse('OpenApi\Attributes', 'OA');
         }
-    }
-
-    /**
-     * @param TransferTransfer $transfer
-     * @param ClassType $class
-     *
-     * @return void
-     */
-    protected function generateAnnotations(TransferTransfer $transfer, ClassType $class): void
-    {
-        if (!$transfer->isApi()) {
-            return;
-        }
-
-        $class->addAttribute(
-            'OpenApi\Attributes\Schema',
-            [
-                'schema' => $transfer->getName(),
-                'title' => $transfer->getName(),
-                'type' => 'object',
-            ]
-        );
     }
 }

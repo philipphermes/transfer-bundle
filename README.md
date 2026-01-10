@@ -63,8 +63,8 @@ return [
 
 ### OpenAPI
 
-you can add `api="true"` to transfers to add attributes and a ref automatically.
-child transfers won't get it automatically.
+You can add `api="true"` to transfers to add OpenApi attributes automatically.
+Child transfers won't get it automatically.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -115,23 +115,17 @@ class UserApiController extends AbstractController
     #[OA\Response(
         response: 200,
         description: 'Returns a user by id',
-        content: new OA\JsonContent(
-            ref: '#/components/schemas/User',
-        )
+        content: new Model(type: UserTransfer::class)
     )]
     #[OA\Response(
         response: 404,
         description: 'Returns a error',
-        content: new OA\JsonContent(
-            ref: '#/components/schemas/Error',
-        )
+        content: new Model(type: ErrorTransfer::class)
     )]
     #[OA\Response(
         response: 500,
         description: 'Returns a error',
-        content: new OA\JsonContent(
-            ref: '#/components/schemas/Error',
-        )
+        content: new Model(type: ErrorTransfer::class)
     )]
     #[Route('/api/user/{id}', name: 'get_user_by_id', methods: ['GET'])]
     public function getUserByIdAction(int $id): Response
