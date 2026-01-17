@@ -143,6 +143,144 @@ class UserApiController extends AbstractController
 symfony console transfer:generate
 ```
 
+## Working with Transfers
+
+### Array Conversion
+
+All generated transfers extend `AbstractTransfer` which provides `toArray()` and `fromArray()` methods for easy serialization.
+
+#### toArray()
+
+Convert a transfer object to an array:
+
+```php
+$user = new UserTransfer();
+$user->setEmail('user@example.com');
+$user->setPassword('secret');
+
+// Basic conversion with camelCase keys (default)
+$array = $user->toArray();
+// ['email' => 'user@example.com', 'password' => 'secret']
+
+// Convert to snake_case keys
+$array = $user->toArray('snake_case');
+// ['email' => 'user@example.com', 'password' => 'secret']
+
+// Custom DateTime format
+$user->setCreatedAt(new DateTime('2024-01-15 10:30:00'));
+$array = $user->toArray('camelCase', true, 'Y-m-d H:i:s');
+// ['createdAt' => '2024-01-15 10:30:00']
+
+// Recursive conversion (includes nested transfers)
+$address = new AddressTransfer();
+$address->setStreet('Main Street');
+$user->addAddress($address);
+$array = $user->toArray('camelCase', true);
+// ['email' => '...', 'addresses' => [['street' => 'Main Street']]]
+```
+
+**Parameters:**
+- `$keyFormat` (string): `'camelCase'` (default) or `'snake_case'`
+- `$recursive` (bool): Convert nested objects recursively (default: `true`)
+- `$dateTimeFormat` (string): PHP date format for DateTime objects (default: `DateTimeInterface::ATOM`)
+
+#### fromArray()
+
+Populate a transfer from an array:
+
+```php
+$data = [
+    'email' => 'user@example.com',
+    'password' => 'secret',
+    'addresses' => [
+        ['street' => 'Main Street', 'zip' => 12345]
+    ]
+];
+
+$user = new UserTransfer();
+$user->fromArray($data, 'camelCase', true);
+
+echo $user->getEmail(); // 'user@example.com'
+```
+
+**Parameters:**
+- `$data` (array): Array with data to populate
+- `$keyFormat` (string): `'camelCase'` (default) or `'snake_case'`
+- `$recursive` (bool): Recursively create nested transfers (default: `true`)
+- `$dateTimeFormat` (string): PHP date format for parsing DateTime strings (default: `DateTimeInterface::ATOM`)
+
+### Property Constants
+
+Each transfer generates constants for property names to avoid magic strings:
+
+```php
+// Instead of using string literals
+$user->fromArray([
+    'email' => 'test@example.com',
+    'password' => 'secret'
+]);
+
+// Use IDE-friendly constants
+$user->fromArray([
+    UserTransfer::EMAIL => 'test@example.com',
+    UserTransfer::PASSWORD => 'secret'
+]);
+```
+
+Constants are automatically generated in `UPPER_CASE` format from property names:
+- `email` → `UserTransfer::EMAIL`
+- `createdAt` → `UserTransfer::CREATED_AT`
+- `addresses` → `UserTransfer::ADDRESSES`
+
+### Entity Array Conversion (Doctrine)
+
+For Doctrine entities, use the `EntityArrayConvertibleTrait` which handles Doctrine-specific features:
+
+```php
+use PhilippHermes\TransferBundle\Entity\EntityArrayConvertibleTrait;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+class User
+{
+    use EntityArrayConvertibleTrait;
+
+    #[ORM\Column]
+    private string $email;
+
+    #[ORM\OneToMany(mappedBy: 'user')]
+    private Collection $orders;
+
+    // ... getters/setters
+}
+
+// Convert entity to array
+$user = $entityManager->find(User::class, 1);
+$array = $user->toArray('camelCase', true, 'Y-m-d H:i:s', 5);
+
+// Populate entity from array (basic properties only)
+$user = new User();
+$user->fromArray($data, 'camelCase');
+```
+
+**Entity-specific features:**
+- **Proxy Detection**: Skips uninitialized Doctrine proxies to prevent lazy loading
+- **Circular Reference Prevention**: Tracks visited entities to avoid infinite loops
+- **Collection Support**: Properly handles `Collection` instances (OneToMany, ManyToMany)
+- **Max Depth**: Fourth parameter limits recursion depth (default: 10)
+
+**Parameters:**
+- `$keyFormat` (string): `'camelCase'` (default) or `'snake_case'`
+- `$recursive` (bool): Convert nested entities recursively (default: `true`)
+- `$dateTimeFormat` (string): PHP date format for DateTime objects (default: `DateTimeInterface::ATOM`)
+- `$maxDepth` (int): Maximum recursion depth (default: `10`)
+
+**Important Notes:**
+- `fromArray()` only sets basic scalar properties and DateTimes, not relations
+- Use EntityManager to properly manage relations and persist entities
+- Uninitialized proxy objects are skipped to avoid triggering lazy loading
+- Circular references are detected and marked as `['_circular_reference' => true]`
+
 ## Code Quality
 
 ### Phpstan

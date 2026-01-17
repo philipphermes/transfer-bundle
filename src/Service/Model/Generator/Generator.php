@@ -8,6 +8,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
 use PhilippHermes\TransferBundle\Service\Model\Type\PropertyTypeMapper;
+use PhilippHermes\TransferBundle\Transfer\AbstractTransfer;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
@@ -49,9 +50,11 @@ class Generator implements GeneratorInterface
         $file->addComment('This file is auto-generated.');
 
         $namespace = $file->addNamespace($generatorConfig->getNamespace());
+        $namespace->addUse(AbstractTransfer::class);
         $this->generateUses($transfer, $namespace);
 
         $class = $namespace->addClass($transfer->getName() . 'Transfer');
+        $class->setExtends(AbstractTransfer::class);
 
         foreach ($transfer->getProperties() as $property) {
             foreach ($this->propertyGeneratorSteps as $propertyGeneratorStep) {

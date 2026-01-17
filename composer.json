@@ -32,12 +32,16 @@
     "symfony/framework-bundle": ">=7.4"
   },
   "require-dev": {
+    "doctrine/collections": "^2.6.0",
+    "doctrine/orm": "^3.6.1",
+    "nelmio/api-doc-bundle": "^v5.8.3",
     "phpstan/phpstan": "^2.1",
-    "phpunit/phpunit": "^12.1",
-    "nelmio/api-doc-bundle": "^v5.8.3"
+    "phpunit/phpunit": "^12.1"
   },
   "suggest": {
-    "nelmio/api-doc-bundle": "^v5.8.3"
+    "doctrine/collections": "Required for EntityArrayConvertibleTrait",
+    "doctrine/orm": "Required for EntityArrayConvertibleTrait",
+    "nelmio/api-doc-bundle": "Required for api support"
   },
   "config": {
     "sort-packages": true
