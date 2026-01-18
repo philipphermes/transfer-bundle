@@ -87,6 +87,13 @@ trait EntityArrayConvertibleTrait
                 }
             } elseif ($typeName === 'array' && is_array($value)) {
                 $property->setValue($this, $value);
+            } elseif (enum_exists($typeName)) {
+                if (is_string($value) || is_int($value)) {
+                    $enumValue = $typeName::tryFrom($value);
+                    if ($enumValue !== null) {
+                        $property->setValue($this, $enumValue);
+                    }
+                }
             } elseif (!in_array($typeName, ['int', 'float', 'string', 'bool', 'array', 'object', 'mixed'], true)) {
                 if (is_scalar($value)) {
                     $property->setValue($this, $value);
@@ -210,6 +217,14 @@ trait EntityArrayConvertibleTrait
 
         if ($value instanceof DateTimeInterface) {
             return $value->format($dateTimeFormat);
+        }
+
+        if ($value instanceof \BackedEnum) {
+            return $value->value;
+        }
+
+        if ($value instanceof \UnitEnum) {
+            return $value->name;
         }
 
         if ($value instanceof ArrayObject || is_array($value)) {
