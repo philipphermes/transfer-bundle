@@ -24,8 +24,13 @@ class PhilippHermesTransferBundle extends AbstractBundle
     {
         $definition->rootNode()
             ->children()
-                ->scalarNode('schema_dir')
-                    ->defaultValue('%kernel.project_dir%/transfers')
+                ->arrayNode('schema_dirs')
+                    ->scalarPrototype()->end()
+                    ->defaultValue(['%kernel.project_dir%/transfers'])
+                ->end()
+                ->arrayNode('exclude_dirs')
+                    ->scalarPrototype()->end()
+                    ->defaultValue([])
                 ->end()
                 ->scalarNode('output_dir')
                     ->defaultValue('%kernel.project_dir%/src/Generated/Transfers')
@@ -45,7 +50,8 @@ class PhilippHermesTransferBundle extends AbstractBundle
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $builder->setParameter('transfer.namespace', $config['namespace']);
-        $builder->setParameter('transfer.schema_dir', $config['schema_dir']);
+        $builder->setParameter('transfer.schema_dirs', $config['schema_dirs']);
+        $builder->setParameter('transfer.exclude_dirs', $config['exclude_dirs']);
         $builder->setParameter('transfer.output_dir', $config['output_dir']);
 
         $builder->register(TransferServiceFactory::class, TransferServiceFactory::class);
@@ -60,7 +66,8 @@ class PhilippHermesTransferBundle extends AbstractBundle
             ->setAutowired(true)
             ->setAutoconfigured(true)
             ->addTag('console.command')
-            ->setArgument('$schemaDir', '%transfer.schema_dir%')
+            ->setArgument('$schemaDirs', '%transfer.schema_dirs%')
+            ->setArgument('$excludeDirs', '%transfer.exclude_dirs%')
             ->setArgument('$outputDir', '%transfer.output_dir%')
             ->setArgument('$namespace', '%transfer.namespace%');
     }

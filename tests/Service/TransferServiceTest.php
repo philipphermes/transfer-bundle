@@ -51,7 +51,7 @@ class TransferServiceTest extends TestCase
     public function testGenerate(): void
     {
         $config = (new GeneratorConfigTransfer())
-            ->setSchemaDirectory(__DIR__ . '/../Data/*/Transfers')
+            ->setSchemaDirectories([__DIR__ . '/../Data/*/Transfers'])
             ->setOutputDirectory(__DIR__ . '/../Data/Generated')
             ->setNamespace('PhilippHermes\TransferBundle\Tests\Data\Generated');
 
