@@ -53,8 +53,9 @@ class Generator implements GeneratorInterface
 
         $class = $namespace->addClass($transfer->getName() . 'Transfer');
 
-        if ($transfer->isApi() && $transfer->getApiAlias() !== null) {
-            $class->addConstant('API_ALIAS', $transfer->getApiAlias())->setPublic();
+        if ($transfer->isApi()) {
+            $alias = $transfer->getApiAlias() ?? $transfer->getName();
+            $class->addConstant('API_ALIAS', $alias)->setPublic();
         }
 
         foreach ($transfer->getProperties() as $property) {

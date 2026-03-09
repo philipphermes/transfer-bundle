@@ -262,7 +262,7 @@ class TransferServiceTest extends TestCase
         $categoryContent = file_get_contents(self::OUTPUT_DIR . '/CategoryTransfer.php');
 
         self::assertStringContainsString("public const API_ALIAS = 'ProductResource'", $productContent);
-        self::assertStringNotContainsString('API_ALIAS', $categoryContent);
+        self::assertStringContainsString("public const API_ALIAS = 'Category'", $categoryContent);
     }
 
     public function testGenerateAddsOpenApiUseStatement(): void
