@@ -184,7 +184,8 @@ class UserApiController extends AbstractController
 }
 ```
 
-> **Note:** Child transfers do not inherit `api="true"` - you must set it explicitly on each transfer.
+> [!NOTE]
+> Child transfers do not inherit `api="true"` - you must set it explicitly on each transfer.
 
 ---
 
