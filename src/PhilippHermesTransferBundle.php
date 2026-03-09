@@ -112,7 +112,7 @@ class PhilippHermesTransferBundle extends AbstractBundle
             }
 
             $models[] = [
-                'alias' => $this->aliasFromPath($filePath),
+                'alias' => $this->aliasFromFile($data, $filePath),
                 'type' => $className,
             ];
         }
@@ -141,12 +141,17 @@ class PhilippHermesTransferBundle extends AbstractBundle
     }
 
     /**
+     * @param string $fileContent
      * @param string $filePath
      *
      * @return string|null
      */
-    protected function aliasFromPath(string $filePath): ?string
+    protected function aliasFromFile(string $fileContent, string $filePath): ?string
     {
+        if (preg_match("/public const API_ALIAS = '([^']+)'/", $fileContent, $matches)) {
+            return $matches[1];
+        }
+
         $filename = basename($filePath, '.php');
 
         return preg_replace('/Transfer$/', '', $filename);

@@ -97,6 +97,7 @@ readonly class TransferParser implements TransferParserInterface
                     $transfer = new TransferTransfer();
                     $transfer->setName((string)$transferElement['name']);
                     $transfer->setIsApi(isset($transferElement['api']) && ((string)$transferElement['api'] === 'true'));
+                    $transfer->setApiAlias(isset($transferElement['apiAlias']) ? (string)$transferElement['apiAlias'] : null);
                 }
 
                 foreach ($transferElement->property as $propertyElement) {

@@ -2,11 +2,11 @@
 <transfers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="../../../../src/Resources/schema/transfer.xsd">
 
-    <transfer name="Address" api="true">
+    <transfer name="Address">
         <property name="zip" type="int"/>
     </transfer>
 
-    <transfer name="Country" api="true">
+    <transfer name="Country">
         <property name="iso" type="string"/>
         <property name="createdAt" type="DateTime"/>
     </transfer>

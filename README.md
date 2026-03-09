@@ -131,10 +131,20 @@ Options:
 
 ## OpenAPI Integration
 
-Add `api="true"` to transfers to automatically generate OpenAPI attributes:
+Add `api="true"` to transfers to automatically generate OpenAPI attributes.
+
+### Transfer Attributes
+
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `name` | Yes | Transfer name (generates `{name}Transfer` class) |
+| `api` | No | Set to `true` to generate OpenAPI attributes |
+| `apiAlias` | No | Custom name for OpenAPI documentation (default: transfer name without "Transfer" suffix) |
+
+### Example
 
 ```xml
-<transfer name="User" api="true">
+<transfer name="User" api="true" apiAlias="UserResource">
     <property name="email" type="string" description="The email of the user"/>
     <property name="password" type="string" description="The password of the user"/>
 </transfer>
