@@ -23,13 +23,15 @@ class TransferGenerateCommand extends Command
 
     /**
      * @param TransferServiceInterface $transferService
-     * @param string $schemaDir
+     * @param array<string> $schemaDirs
+     * @param array<string> $excludeDirs
      * @param string $outputDir
      * @param string $namespace
      */
     public function __construct(
         protected readonly TransferServiceInterface $transferService,
-        string $schemaDir,
+        array $schemaDirs,
+        array $excludeDirs,
         string $outputDir,
         string $namespace,
     )
@@ -37,7 +39,8 @@ class TransferGenerateCommand extends Command
         parent::__construct();
 
         $this->generatorConfig = (new GeneratorConfigTransfer())
-            ->setSchemaDirectory($schemaDir)
+            ->setSchemaDirectories($schemaDirs)
+            ->setExcludeDirectories($excludeDirs)
             ->setOutputDirectory($outputDir)
             ->setNamespace($namespace);
     }
@@ -60,7 +63,8 @@ class TransferGenerateCommand extends Command
 
         $io->section('Configuration');
         $io->definitionList(
-            ['Schema Directory' => $this->generatorConfig->getSchemaDirectory()],
+            ['Schema Directories' => implode(', ', $this->generatorConfig->getSchemaDirectories())],
+            ['Exclude Directories' => implode(', ', $this->generatorConfig->getExcludeDirectories()) ?: '(none)'],
             ['Output Directory' => $this->generatorConfig->getOutputDirectory()],
             ['Namespace' => $this->generatorConfig->getNamespace()],
             ['Clean Output Dir' => !$input->getOption(self::OPTION_DISABLE_CLEAN)],

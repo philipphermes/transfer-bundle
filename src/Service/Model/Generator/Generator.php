@@ -53,6 +53,11 @@ class Generator implements GeneratorInterface
 
         $class = $namespace->addClass($transfer->getName() . 'Transfer');
 
+        if ($transfer->isApi()) {
+            $alias = $transfer->getApiAlias() ?? $transfer->getName();
+            $class->addConstant('API_ALIAS', $alias)->setPublic();
+        }
+
         foreach ($transfer->getProperties() as $property) {
             foreach ($this->propertyGeneratorSteps as $propertyGeneratorStep) {
                 $propertyGeneratorStep->generate($transfer, $property, $class);
