@@ -6,27 +6,73 @@ namespace PhilippHermes\TransferBundle\Transfer;
 
 class GeneratorConfigTransfer
 {
-    protected string $schemaDirectory;
+    /**
+     * @var array<string>
+     */
+    protected array $schemaDirectories = [];
+
+    /**
+     * @var array<string>
+     */
+    protected array $excludeDirectories = [];
 
     protected string $outputDirectory;
 
     protected string $namespace;
 
     /**
-     * @return string
+     * @return array<string>
      */
-    public function getSchemaDirectory(): string
+    public function getSchemaDirectories(): array
     {
-        return $this->schemaDirectory;
+        return $this->schemaDirectories;
+    }
+
+    /**
+     * @param array<string> $schemaDirectories
+     * @return GeneratorConfigTransfer
+     */
+    public function setSchemaDirectories(array $schemaDirectories): GeneratorConfigTransfer
+    {
+        $this->schemaDirectories = $schemaDirectories;
+        return $this;
     }
 
     /**
      * @param string $schemaDirectory
      * @return GeneratorConfigTransfer
      */
-    public function setSchemaDirectory(string $schemaDirectory): GeneratorConfigTransfer
+    public function addSchemaDirectory(string $schemaDirectory): GeneratorConfigTransfer
     {
-        $this->schemaDirectory = $schemaDirectory;
+        $this->schemaDirectories[] = $schemaDirectory;
+        return $this;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getExcludeDirectories(): array
+    {
+        return $this->excludeDirectories;
+    }
+
+    /**
+     * @param array<string> $excludeDirectories
+     * @return GeneratorConfigTransfer
+     */
+    public function setExcludeDirectories(array $excludeDirectories): GeneratorConfigTransfer
+    {
+        $this->excludeDirectories = $excludeDirectories;
+        return $this;
+    }
+
+    /**
+     * @param string $excludeDirectory
+     * @return GeneratorConfigTransfer
+     */
+    public function addExcludeDirectory(string $excludeDirectory): GeneratorConfigTransfer
+    {
+        $this->excludeDirectories[] = $excludeDirectory;
         return $this;
     }
 

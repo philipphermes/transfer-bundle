@@ -24,6 +24,8 @@ class TransferTransfer
 
     protected bool $isApi = false;
 
+    protected ?string $apiAlias = null;
+
     /**
      * @return string
      */
@@ -135,6 +137,24 @@ class TransferTransfer
     public function setIsApi(bool $isApi): TransferTransfer
     {
         $this->isApi = $isApi;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getApiAlias(): ?string
+    {
+        return $this->apiAlias;
+    }
+
+    /**
+     * @param string|null $apiAlias
+     * @return TransferTransfer
+     */
+    public function setApiAlias(?string $apiAlias): TransferTransfer
+    {
+        $this->apiAlias = $apiAlias;
         return $this;
     }
 }

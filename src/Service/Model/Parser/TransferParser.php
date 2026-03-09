@@ -26,14 +26,45 @@ readonly class TransferParser implements TransferParserInterface
     {
         $collection = new TransferCollectionTransfer();
 
-        $paths = glob($generatorConfigTransfer->getSchemaDirectory(), GLOB_ONLYDIR);
+        $allPaths = [];
+        foreach ($generatorConfigTransfer->getSchemaDirectories() as $schemaDirectory) {
+            $paths = glob($schemaDirectory, GLOB_ONLYDIR);
 
-        if ($paths === false) {
-            return $collection->addError('Could not parse ' . $generatorConfigTransfer->getSchemaDirectory());
+            if ($paths === false) {
+                $collection->addError('Could not parse ' . $schemaDirectory);
+                continue;
+            }
+
+            $allPaths = array_merge($allPaths, $paths);
+        }
+
+        if ($allPaths === []) {
+            return $collection;
+        }
+
+        $excludePatterns = [];
+        foreach ($generatorConfigTransfer->getExcludeDirectories() as $excludeDirectory) {
+            $excludedPaths = glob($excludeDirectory, GLOB_ONLYDIR);
+            if ($excludedPaths !== false) {
+                $excludePatterns = array_merge($excludePatterns, $excludedPaths);
+            }
+        }
+
+        $allPaths = array_filter($allPaths, function (string $path) use ($excludePatterns): bool {
+            foreach ($excludePatterns as $excludePattern) {
+                if (str_starts_with($path, $excludePattern) || $path === $excludePattern) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        if ($allPaths === []) {
+            return $collection;
         }
 
         $finder = new Finder();
-        $finder->files()->in($paths)->name('*.xml');
+        $finder->files()->in($allPaths)->name('*.xml');
 
         if (!$finder->hasResults()) {
             return $collection;
@@ -66,6 +97,7 @@ readonly class TransferParser implements TransferParserInterface
                     $transfer = new TransferTransfer();
                     $transfer->setName((string)$transferElement['name']);
                     $transfer->setIsApi(isset($transferElement['api']) && ((string)$transferElement['api'] === 'true'));
+                    $transfer->setApiAlias(isset($transferElement['apiAlias']) ? (string)$transferElement['apiAlias'] : null);
                 }
 
                 foreach ($transferElement->property as $propertyElement) {
