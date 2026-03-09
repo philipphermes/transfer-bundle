@@ -148,7 +148,7 @@ class PhilippHermesTransferBundle extends AbstractBundle
      */
     protected function aliasFromFile(string $fileContent, string $filePath): ?string
     {
-        if (preg_match("/public const API_ALIAS = '([^']+)'/", $fileContent, $matches)) {
+        if (preg_match("/public\s+const\s+API_ALIAS\s*=\s*'([^']+)'/", $fileContent, $matches)) {
             return $matches[1];
         }
 
