@@ -37,7 +37,7 @@
     "nelmio/api-doc-bundle": "^v5.8.3"
   },
   "suggest": {
-    "nelmio/api-doc-bundle": "^v5.8.3"
+    "nelmio/api-doc-bundle": "For API Documentation"
   },
   "config": {
     "sort-packages": true
