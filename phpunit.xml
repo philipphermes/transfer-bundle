@@ -20,5 +20,8 @@
         <include>
             <directory>src</directory>
         </include>
+        <exclude>
+            <directory>src/Transfer</directory>
+        </exclude>
     </source>
 </phpunit>

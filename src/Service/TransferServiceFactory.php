@@ -10,6 +10,7 @@ use PhilippHermes\TransferBundle\Service\Model\Generator\Generator;
 use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\AdderPropertyGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\GetterPropertyGeneratorStep;
+use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\HasPropertyGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyPropertyGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\SetterPropertyGeneratorStep;
@@ -24,8 +25,6 @@ class TransferServiceFactory
      */
     public function createGenerator(): GeneratorInterface
     {
-        //TODO cleaner
-
         return new Generator(
             $this->createPropertyGeneratorSteps(),
         );
@@ -55,6 +54,7 @@ class TransferServiceFactory
         return [
             new PropertyPropertyGeneratorStep(),
             new GetterPropertyGeneratorStep(),
+            new HasPropertyGeneratorStep(),
             new SetterPropertyGeneratorStep(),
             new AdderPropertyGeneratorStep(),
         ];

@@ -14,11 +14,11 @@ interface GeneratorInterface
      * @param TransferCollectionTransfer $transferCollectionTransfer
      * @param callable $progressCallback
      *
-     * @return void
+     * @return array<string> paths of the written files
      */
     public function generate(
         GeneratorConfigTransfer $generatorConfigTransfer,
         TransferCollectionTransfer $transferCollectionTransfer,
         callable $progressCallback,
-    ): void;
+    ): array;
 }

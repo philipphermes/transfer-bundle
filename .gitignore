@@ -1,7 +1,8 @@
 .idea/
 vendor/
 .phpunit.cache/
-tests/data/Generated
+tests/Data/Generated
 composer.lock
 .DS_Store
 coverage-report
+CLAUDE.md
