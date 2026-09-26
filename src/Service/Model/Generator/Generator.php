@@ -6,6 +6,7 @@ namespace PhilippHermes\TransferBundle\Service\Model\Generator;
 
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
+use PhilippHermes\TransferBundle\Service\Model\Generator\ClassGeneratorSteps\ClassGeneratorStepInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
 use PhilippHermes\TransferBundle\Service\Model\Type\PropertyTypeMapper;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
@@ -19,11 +20,29 @@ class Generator implements GeneratorInterface
 
     /**
      * @param array<PropertyGeneratorStepInterface> $propertyGeneratorSteps
+     * @param array<ClassGeneratorStepInterface> $classGeneratorSteps
      */
     public function __construct(
         protected readonly array $propertyGeneratorSteps,
+        protected readonly array $classGeneratorSteps = [],
     )
     {
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function render(
+        GeneratorConfigTransfer $generatorConfigTransfer,
+        TransferCollectionTransfer $transferCollectionTransfer,
+    ): array {
+        $files = [];
+        foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
+            $path = $generatorConfigTransfer->getOutputDirectory() . '/' . $transfer->getName() . 'Transfer.php';
+            $files[$path] = $this->renderTransfer($generatorConfigTransfer, $transfer);
+        }
+
+        return $files;
     }
 
     /**
@@ -35,18 +54,14 @@ class Generator implements GeneratorInterface
         callable $progressCallback,
     ): array {
         $outputDirectory = $generatorConfigTransfer->getOutputDirectory();
-
-        $files = [];
-        foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
-            $files[$outputDirectory . '/' . $transfer->getName() . 'Transfer.php'] = $this->renderTransfer($generatorConfigTransfer, $transfer);
-        }
+        $files = $this->render($generatorConfigTransfer, $transferCollectionTransfer);
 
         if (!is_dir($outputDirectory) && !@mkdir($outputDirectory, 0775, true) && !is_dir($outputDirectory)) {
             throw new RuntimeException(sprintf("Could not create output directory '%s': %s", $outputDirectory, $this->getLastErrorMessage()));
         }
 
         foreach ($files as $path => $content) {
-            if (@file_put_contents($path, $content) === false) {
+            if (!$this->isUpToDate($path, $content) && @file_put_contents($path, $content) === false) {
                 throw new RuntimeException(sprintf("Could not write '%s': %s", $path, $this->getLastErrorMessage()));
             }
 
@@ -54,6 +69,19 @@ class Generator implements GeneratorInterface
         }
 
         return array_keys($files);
+    }
+
+    /**
+     * Unchanged files are not rewritten, so their mtime stays stable.
+     *
+     * @param string $path
+     * @param string $content
+     *
+     * @return bool
+     */
+    protected function isUpToDate(string $path, string $content): bool
+    {
+        return is_file($path) && @file_get_contents($path) === $content;
     }
 
     /**
@@ -91,6 +119,10 @@ class Generator implements GeneratorInterface
             foreach ($this->propertyGeneratorSteps as $propertyGeneratorStep) {
                 $propertyGeneratorStep->generate($transfer, $property, $class);
             }
+        }
+
+        foreach ($this->classGeneratorSteps as $classGeneratorStep) {
+            $classGeneratorStep->generate($transfer, $class);
         }
 
         return (string)$file;

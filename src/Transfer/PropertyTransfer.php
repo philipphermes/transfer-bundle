@@ -17,6 +17,11 @@ class PropertyTransfer
     protected bool $isNullable = false;
     protected bool $isTransfer = false;
     protected bool $isSingularTransfer = false;
+    protected ?string $default = null;
+    protected bool $hasDefaultValue = false;
+    protected string|int|float|bool|null $defaultValue = null;
+    protected ?string $example = null;
+    protected bool $isDeprecated = false;
 
     /**
      * @return string
@@ -199,6 +204,16 @@ class PropertyTransfer
     }
 
     /**
+     * Whether the generated property always holds a value: non-nullable with a default value or `[]`.
+     *
+     * @return bool
+     */
+    public function isAlwaysInitialized(): bool
+    {
+        return !$this->isNullable && ($this->hasDefaultValue || $this->type === 'array');
+    }
+
+    /**
      * Whether the property is declared as a list (`X[]`).
      *
      * @return bool
@@ -206,5 +221,90 @@ class PropertyTransfer
     public function isCollection(): bool
     {
         return $this->singularType !== null;
+    }
+
+    /**
+     * The raw `default` attribute from the XML.
+     *
+     * @return string|null
+     */
+    public function getDefault(): ?string
+    {
+        return $this->default;
+    }
+
+    /**
+     * @param string|null $default
+     * @return PropertyTransfer
+     */
+    public function setDefault(?string $default): PropertyTransfer
+    {
+        $this->default = $default;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasDefaultValue(): bool
+    {
+        return $this->hasDefaultValue;
+    }
+
+    /**
+     * The `default` attribute converted to the property type.
+     *
+     * @return string|int|float|bool|null
+     */
+    public function getDefaultValue(): string|int|float|bool|null
+    {
+        return $this->defaultValue;
+    }
+
+    /**
+     * @param string|int|float|bool $defaultValue
+     * @return PropertyTransfer
+     */
+    public function setDefaultValue(string|int|float|bool $defaultValue): PropertyTransfer
+    {
+        $this->defaultValue = $defaultValue;
+        $this->hasDefaultValue = true;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getExample(): ?string
+    {
+        return $this->example;
+    }
+
+    /**
+     * @param string|null $example
+     * @return PropertyTransfer
+     */
+    public function setExample(?string $example): PropertyTransfer
+    {
+        $this->example = $example;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeprecated(): bool
+    {
+        return $this->isDeprecated;
+    }
+
+    /**
+     * @param bool $isDeprecated
+     * @return PropertyTransfer
+     */
+    public function setIsDeprecated(bool $isDeprecated): PropertyTransfer
+    {
+        $this->isDeprecated = $isDeprecated;
+        return $this;
     }
 }

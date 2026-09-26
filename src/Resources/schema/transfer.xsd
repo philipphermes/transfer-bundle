@@ -12,6 +12,7 @@
             <xs:enumeration value="mixed"/>
             <xs:enumeration value="DateTime"/>
             <xs:enumeration value="DateTimeImmutable"/>
+            <xs:enumeration value="DateTimeInterface"/>
             <xs:enumeration value="object"/>
         </xs:restriction>
     </xs:simpleType>
@@ -34,6 +35,9 @@
                                     <xs:attribute name="description" type="xs:string"/>
                                     <xs:attribute name="singular" type="xs:string"/>
                                     <xs:attribute name="isNullable" type="xs:boolean" default="false"/>
+                                    <xs:attribute name="default" type="xs:string"/>
+                                    <xs:attribute name="example" type="xs:string"/>
+                                    <xs:attribute name="deprecated" type="xs:boolean" default="false"/>
                                 </xs:complexType>
                             </xs:element>
                         </xs:sequence>

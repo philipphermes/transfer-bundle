@@ -29,6 +29,10 @@ class AdderPropertyGeneratorStep implements PropertyGeneratorStepInterface
         $method->setReturnType('self');
         $method->setComment('@param ' . $propertyTransfer->getSingularAnnotationType() . ' $' . $parameterName);
 
+        if ($propertyTransfer->isDeprecated()) {
+            $method->addComment('@deprecated');
+        }
+
         if ($propertyTransfer->getType() === 'ArrayObject') {
             $method->addBody('($this->' . $name . ' ??= new ArrayObject([]))->append($' . $parameterName . ');');
         } else {

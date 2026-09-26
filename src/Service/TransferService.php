@@ -29,6 +29,14 @@ readonly class TransferService implements TransferServiceInterface
     /**
      * @inheritDoc
      */
+    public function render(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer): array
+    {
+        return $this->transferServiceFactory->createGenerator()->render($generatorConfigTransfer, $transferCollectionTransfer);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer, callable $progressCallback): array
     {
         return $this->transferServiceFactory->createGenerator()->generate($generatorConfigTransfer, $transferCollectionTransfer, $progressCallback);
@@ -40,5 +48,13 @@ readonly class TransferService implements TransferServiceInterface
     public function clean(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): void
     {
         $this->transferServiceFactory->createTransferCleaner()->clean($generatorConfigTransfer, $keepFiles);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findStale(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): array
+    {
+        return $this->transferServiceFactory->createTransferCleaner()->findStale($generatorConfigTransfer, $keepFiles);
     }
 }

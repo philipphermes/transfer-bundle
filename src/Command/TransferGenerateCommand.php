@@ -6,6 +6,7 @@ namespace PhilippHermes\TransferBundle\Command;
 
 use PhilippHermes\TransferBundle\Service\TransferServiceInterface;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
+use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -18,6 +19,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class TransferGenerateCommand extends Command
 {
     protected const string OPTION_DISABLE_CLEAN = 'clean-disable';
+
+    protected const string OPTION_CHECK = 'check';
 
     protected GeneratorConfigTransfer $generatorConfig;
 
@@ -54,6 +57,12 @@ class TransferGenerateCommand extends Command
             self::OPTION_DISABLE_CLEAN,
             mode: InputOption::VALUE_NONE,
             description: 'Keep stale generated transfers in the output directory',
+        );
+
+        $this->addOption(
+            self::OPTION_CHECK,
+            mode: InputOption::VALUE_NONE,
+            description: 'Only check whether the generated transfers are up to date, without writing anything',
         );
     }
 
@@ -92,6 +101,10 @@ class TransferGenerateCommand extends Command
             }
         }
 
+        if ($input->getOption(self::OPTION_CHECK)) {
+            return $this->check($io, $transferCollectionTransfer, !$input->getOption(self::OPTION_DISABLE_CLEAN));
+        }
+
         $transfers = $transferCollectionTransfer->getTransfers()->getArrayCopy();
 
         $io->section(sprintf('Generating %d Transfers', count($transfers)));
@@ -118,6 +131,46 @@ class TransferGenerateCommand extends Command
         }
 
         $io->success('Transfer generation completed successfully');
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @param SymfonyStyle $io
+     * @param TransferCollectionTransfer $transferCollectionTransfer
+     * @param bool $checkStale
+     *
+     * @return int
+     */
+    protected function check(SymfonyStyle $io, TransferCollectionTransfer $transferCollectionTransfer, bool $checkStale): int
+    {
+        $io->section('Checking Transfers');
+
+        $files = $this->transferService->render($this->generatorConfig, $transferCollectionTransfer);
+
+        $differences = [];
+        foreach ($files as $path => $content) {
+            if (!is_file($path)) {
+                $differences[] = 'new: ' . $path;
+            } elseif (file_get_contents($path) !== $content) {
+                $differences[] = 'changed: ' . $path;
+            }
+        }
+
+        if ($checkStale) {
+            foreach ($this->transferService->findStale($this->generatorConfig, array_keys($files)) as $staleFile) {
+                $differences[] = 'stale: ' . $staleFile;
+            }
+        }
+
+        if ($differences) {
+            $io->error('Generated transfers are out of date, run transfer:generate');
+            $io->listing($differences);
+
+            return Command::FAILURE;
+        }
+
+        $io->success('Generated transfers are up to date');
 
         return Command::SUCCESS;
     }

@@ -7,6 +7,7 @@ namespace PhilippHermes\TransferBundle\Tests\Service\Model\Parser;
 use PhilippHermes\TransferBundle\Tests\Support\TempDirTrait;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class TransferParserTest extends TestCase
@@ -262,6 +263,87 @@ class TransferParserTest extends TestCase
 
         self::assertCount(1, $errors);
         self::assertStringContainsString("Invalid XML structure in 'other.xml'", $errors[0]);
+    }
+
+    public function testUnknownAttributeProducesSchemaWarning(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string" isNulable="true"/></transfer>');
+
+        $collection = $this->parse($this->createConfig());
+
+        self::assertSame([], $collection->getErrors());
+        self::assertSame(['User'], $this->names($collection));
+        self::assertCount(1, $collection->getWarnings());
+        self::assertStringContainsString("Schema validation failed for 'a.xml' (line 3)", $collection->getWarnings()[0]);
+        self::assertStringContainsString('isNulable', $collection->getWarnings()[0]);
+    }
+
+    public function testValidSchemaProducesNoWarnings(): void
+    {
+        $this->writeSchema('schemas/a.xml', <<<'XML'
+            <transfer name="User" api="true" apiAlias="UserResource">
+                <property name="email" type="string" description="Mail" example="a@b.c" default="x" deprecated="true" isNullable="1"/>
+                <property name="createdAt" type="DateTimeInterface"/>
+            </transfer>
+            XML);
+
+        self::assertSame([], $this->parse($this->createConfig())->getWarnings());
+    }
+
+    public function testDefaultValuesAreConvertedToThePropertyType(): void
+    {
+        $this->writeSchema('schemas/a.xml', <<<'XML'
+            <transfer name="Settings">
+                <property name="name" type="string" default="none"/>
+                <property name="limit" type="int" default="-10"/>
+                <property name="ratio" type="float" default="0.5"/>
+                <property name="enabled" type="bool" default="false"/>
+                <property name="visible" type="bool" default="1"/>
+                <property name="plain" type="string"/>
+            </transfer>
+            XML);
+
+        $collection = $this->parse($this->createConfig());
+        self::assertSame([], $collection->getErrors());
+
+        $values = [];
+        foreach ($this->transfer($collection, 'Settings')->getProperties() as $property) {
+            $values[$property->getName()] = $property->hasDefaultValue() ? $property->getDefaultValue() : 'no default';
+        }
+
+        self::assertSame(
+            ['name' => 'none', 'limit' => -10, 'ratio' => 0.5, 'enabled' => false, 'visible' => true, 'plain' => 'no default'],
+            $values,
+        );
+    }
+
+    /**
+     * @return array<array{string, string, string}>
+     */
+    public static function invalidDefaultProvider(): array
+    {
+        return [
+            'int' => ['int', '1.5', "invalid default '1.5' for type 'int'"],
+            'float' => ['float', 'abc', "invalid default 'abc' for type 'float'"],
+            'bool' => ['bool', 'yes', "invalid default 'yes' for type 'bool'"],
+            'collection' => ['string[]', 'a', 'default values are only supported for string, int, float and bool'],
+            'transfer' => ['Settings', 'a', 'default values are only supported for string, int, float and bool'],
+        ];
+    }
+
+    #[DataProvider('invalidDefaultProvider')]
+    public function testInvalidDefaultValuesAreReported(string $type, string $default, string $message): void
+    {
+        $this->writeSchema('schemas/a.xml', sprintf(
+            '<transfer name="Settings"><property name="value" type="%s" default="%s"/></transfer>',
+            $type,
+            $default,
+        ));
+
+        self::assertSame(
+            ["Transfer 'Settings', property 'value': " . $message],
+            $this->parse($this->createConfig())->getErrors(),
+        );
     }
 
     /**

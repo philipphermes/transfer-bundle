@@ -78,4 +78,14 @@ class TransferCleanerTest extends TestCase
         self::assertFileExists($keep);
         self::assertFileDoesNotExist($stale);
     }
+
+    public function testFindStaleDoesNotDeleteAnything(): void
+    {
+        $keep = $this->writeFile('output/KeepTransfer.php', self::GENERATED);
+        $stale = $this->writeFile('output/StaleTransfer.php', self::GENERATED);
+        $this->writeFile('output/MoneyTransfer.php', self::HANDWRITTEN);
+
+        self::assertSame([$stale], (new TransferCleaner())->findStale($this->createConfig(), [$keep]));
+        self::assertFileExists($stale);
+    }
 }

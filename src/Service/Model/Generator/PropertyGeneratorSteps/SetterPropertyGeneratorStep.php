@@ -20,6 +20,10 @@ class SetterPropertyGeneratorStep implements PropertyGeneratorStepInterface
         $method->setPublic();
         $method->setReturnType('self');
         $method->setComment('@param ' . $propertyTransfer->getAnnotationType() . ($propertyTransfer->isNullable() ? '|null' : '') . ' $' . $propertyTransfer->getName());
+
+        if ($propertyTransfer->isDeprecated()) {
+            $method->addComment('@deprecated');
+        }
         $method->addBody('$this->' . $propertyTransfer->getName() . ' = $' . $propertyTransfer->getName() . ';');
         $method->addBody('return $this;');
 

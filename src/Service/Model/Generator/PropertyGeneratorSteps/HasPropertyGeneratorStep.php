@@ -19,6 +19,12 @@ class HasPropertyGeneratorStep implements PropertyGeneratorStepInterface
         $method->setPublic();
         $method->setReturnType('bool');
         $method->setComment('@return bool whether the property is set and not null');
-        $method->addBody('return isset($this->' . $propertyTransfer->getName() . ');');
+
+        if ($propertyTransfer->isDeprecated()) {
+            $method->addComment('@deprecated');
+        }
+        $method->addBody($propertyTransfer->isAlwaysInitialized()
+            ? 'return true;'
+            : 'return isset($this->' . $propertyTransfer->getName() . ');');
     }
 }

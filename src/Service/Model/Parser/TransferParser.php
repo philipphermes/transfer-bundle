@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Parser;
 
+use DOMDocument;
 use InvalidArgumentException;
 use PhilippHermes\TransferBundle\Service\Model\Type\PropertyTypeMapper;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
@@ -16,6 +17,8 @@ use Symfony\Component\Finder\Finder;
 readonly class TransferParser implements TransferParserInterface
 {
     protected const string IDENTIFIER_PATTERN = '/^[A-Za-z_][A-Za-z0-9_]*$/';
+
+    protected const string SCHEMA_FILE = __DIR__ . '/../../../Resources/schema/transfer.xsd';
 
     public function __construct(
         protected PropertyTypeMapper $propertyTypeMapper,
@@ -176,7 +179,10 @@ readonly class TransferParser implements TransferParserInterface
                     $property
                         ->setDescription(isset($propertyElement['description']) ? (string)$propertyElement['description'] : null)
                         ->setSingular(isset($propertyElement['singular']) ? (string)$propertyElement['singular'] : null)
-                        ->setIsNullable($this->parseBool($propertyElement['isNullable']));
+                        ->setIsNullable($this->parseBool($propertyElement['isNullable']))
+                        ->setDefault(isset($propertyElement['default']) ? (string)$propertyElement['default'] : null)
+                        ->setExample(isset($propertyElement['example']) ? (string)$propertyElement['example'] : null)
+                        ->setIsDeprecated($this->parseBool($propertyElement['deprecated']));
 
                     $transfer->addProperty($property);
                     $propertyTypesToResolve[$propertyTypeToResolveKey] = $type;
@@ -198,6 +204,7 @@ readonly class TransferParser implements TransferParserInterface
                         $property,
                         $propertyTypesToResolve[$this->getPropertyTypeToResolveKey($transfer, $property)],
                     );
+                    $this->resolveDefaultValue($property);
                 } catch (InvalidArgumentException $exception) {
                     $collection->addError(sprintf(
                         "Transfer '%s', property '%s': %s",
@@ -227,9 +234,9 @@ readonly class TransferParser implements TransferParserInterface
         libxml_clear_errors();
 
         try {
-            $xml = simplexml_load_file($absoluteFilePath);
+            $document = new DOMDocument();
 
-            if ($xml === false) {
+            if (!$document->load($absoluteFilePath)) {
                 $error = libxml_get_errors()[0] ?? null;
                 $collection->addError(sprintf(
                     "Invalid XML in '%s'%s",
@@ -239,12 +246,25 @@ readonly class TransferParser implements TransferParserInterface
 
                 return null;
             }
+
+            if (!$document->schemaValidate(self::SCHEMA_FILE)) {
+                foreach (libxml_get_errors() as $error) {
+                    $collection->addWarning(sprintf(
+                        "Schema validation failed for '%s' (line %d): %s",
+                        $fileName,
+                        $error->line,
+                        trim($error->message),
+                    ));
+                }
+            }
         } finally {
             libxml_clear_errors();
             libxml_use_internal_errors($previousUseErrors);
         }
 
-        if (!isset($xml->transfer)) {
+        $xml = simplexml_import_dom($document);
+
+        if (!$xml || !isset($xml->transfer)) {
             $collection->addError("Invalid XML structure in '{$fileName}'");
 
             return null;
@@ -289,6 +309,42 @@ readonly class TransferParser implements TransferParserInterface
                 $apiAlias,
             ));
         }
+    }
+
+    /**
+     * Converts the raw `default` attribute to the property type.
+     *
+     * @param PropertyTransfer $property
+     *
+     * @throws InvalidArgumentException if the default is not supported or invalid for the type
+     *
+     * @return void
+     */
+    protected function resolveDefaultValue(PropertyTransfer $property): void
+    {
+        $default = $property->getDefault();
+
+        if ($default === null) {
+            return;
+        }
+
+        $value = match ($property->isCollection() ? null : $property->getType()) {
+            'string' => $default,
+            'int' => preg_match('/^-?\d+$/', $default) === 1 ? (int)$default : null,
+            'float' => is_numeric($default) ? (float)$default : null,
+            'bool' => match (strtolower($default)) {
+                'true', '1' => true,
+                'false', '0' => false,
+                default => null,
+            },
+            default => throw new InvalidArgumentException('default values are only supported for string, int, float and bool'),
+        };
+
+        if ($value === null) {
+            throw new InvalidArgumentException(sprintf("invalid default '%s' for type '%s'", $default, $property->getType()));
+        }
+
+        $property->setDefaultValue($value);
     }
 
     /**
