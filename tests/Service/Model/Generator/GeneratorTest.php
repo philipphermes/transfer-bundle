@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace PhilippHermes\TransferBundle\Tests\Service\Model\Generator;
 
 use ArrayObject;
+use DateTime;
+use DateTimeImmutable;
 use OpenApi\Attributes as OA;
+use PhilippHermes\TransferBundle\Service\TransferService;
+use PhilippHermes\TransferBundle\Service\TransferServiceFactory;
 use PhilippHermes\TransferBundle\Tests\Support\Fixtures\Other\ValueObject as OtherValueObject;
+use PhilippHermes\TransferBundle\Tests\Support\Fixtures\Size;
 use PhilippHermes\TransferBundle\Tests\Support\Fixtures\Status;
 use PhilippHermes\TransferBundle\Tests\Support\Fixtures\ValueObject;
 use PhilippHermes\TransferBundle\Tests\Support\TempDirTrait;
@@ -202,6 +207,165 @@ class GeneratorTest extends TestCase
         self::assertArrayNotHasKey('description', $currency);
     }
 
+    public function testDefaultValuesAreInitialized(): void
+    {
+        $this->writeSchema('schemas/a.xml', <<<'XML'
+            <transfer name="Settings" api="true">
+                <property name="limit" type="int" default="10"/>
+                <property name="label" type="string" default="none" isNullable="true"/>
+            </transfer>
+            XML);
+
+        $ns = $this->generateAndLoad($this->createConfig());
+        $class = $ns . '\\SettingsTransfer';
+        $settings = new $class();
+
+        self::assertTrue($settings->hasLimit());
+        self::assertSame(10, $settings->getLimit());
+        self::assertSame('none', $settings->getLabel());
+        self::assertSame(10, $this->openApiArguments($class, 'limit')['default']);
+    }
+
+    public function testOpenApiAttributesForEnumsExamplesAndDeprecation(): void
+    {
+        $this->writeSchema('schemas/a.xml', sprintf(
+            <<<'XML'
+                <transfer name="Shirt" api="true">
+                    <property name="status" type="%1$s"/>
+                    <property name="statuses" type="%1$s[]" singular="status"/>
+                    <property name="size" type="%2$s"/>
+                    <property name="name" type="string" example="Basic tee"/>
+                    <property name="legacy" type="string[]" deprecated="true"/>
+                </transfer>
+                XML,
+            Status::class,
+            Size::class,
+        ));
+
+        $ns = $this->generateAndLoad($this->createConfig());
+        $class = $ns . '\\ShirtTransfer';
+
+        $status = $this->openApiArguments($class, 'status');
+        self::assertSame('string', $status['type']);
+        self::assertSame(['active'], $status['enum']);
+
+        $statuses = $this->openApiArguments($class, 'statuses');
+        self::assertInstanceOf(OA\Items::class, $statuses['items']);
+        self::assertSame(['active'], $statuses['items']->enum);
+
+        self::assertSame(['Small', 'Large'], $this->openApiArguments($class, 'size')['enum']);
+        self::assertSame('Basic tee', $this->openApiArguments($class, 'name')['example']);
+        self::assertTrue($this->openApiArguments($class, 'legacy')['deprecated']);
+
+        self::assertStringContainsString('@deprecated', (string)(new ReflectionProperty($class, 'legacy'))->getDocComment());
+        foreach (['getLegacy', 'hasLegacy', 'setLegacy', 'addLegacy'] as $method) {
+            self::assertStringContainsString('@deprecated', (string)(new ReflectionMethod($class, $method))->getDocComment(), $method);
+        }
+        self::assertStringNotContainsString('@deprecated', (string)(new ReflectionMethod($class, 'getName'))->getDocComment());
+    }
+
+    public function testToArrayAndFromArrayRoundTrip(): void
+    {
+        $ns = $this->generateCatalog();
+        $catalogClass = $ns . '\\CatalogTransfer';
+        $itemClass = $ns . '\\ItemTransfer';
+
+        $catalog = (new $catalogClass())
+            ->setName('Summer')
+            ->setMain((new $itemClass())->setName('Shirt'))
+            ->addItem((new $itemClass())->setName('Hat'))
+            ->setTags(['a', 'b'])
+            ->setCreatedAt(new DateTime('2026-01-02T03:04:05+00:00'))
+            ->setPublishedAt(new DateTimeImmutable('2026-02-03T04:05:06+00:00'))
+            ->setStatus(Status::Active)
+            ->addStatus(Status::Active)
+            ->setSize(Size::Large)
+            ->addDate(new DateTime('2026-03-04T05:06:07+00:00'));
+
+        $expected = [
+            'name' => 'Summer',
+            'note' => null,
+            'main' => ['name' => 'Shirt'],
+            'items' => [['name' => 'Hat']],
+            'tags' => ['a', 'b'],
+            'createdAt' => '2026-01-02T03:04:05+00:00',
+            'publishedAt' => '2026-02-03T04:05:06+00:00',
+            'status' => 'active',
+            'statuses' => ['active'],
+            'size' => 'Large',
+            'dates' => ['2026-03-04T05:06:07+00:00'],
+            'values' => [],
+        ];
+
+        self::assertSame($expected, $catalog->toArray());
+
+        $copy = $catalogClass::fromArray($expected);
+
+        self::assertInstanceOf($catalogClass, $copy);
+        self::assertSame($expected, $copy->toArray());
+        self::assertInstanceOf($itemClass, $copy->getItems()[0]);
+        self::assertInstanceOf(DateTime::class, $copy->getCreatedAt());
+        self::assertInstanceOf(DateTimeImmutable::class, $copy->getPublishedAt());
+        self::assertSame(Status::Active, $copy->getStatuses()[0]);
+        self::assertSame(Size::Large, $copy->getSize());
+    }
+
+    public function testToArrayOfEmptyTransferAndFromArrayWithMissingAndUnknownKeys(): void
+    {
+        $ns = $this->generateCatalog();
+        $catalogClass = $ns . '\\CatalogTransfer';
+
+        $empty = (new $catalogClass())->toArray();
+        self::assertNull($empty['name']);
+        self::assertNull($empty['main']);
+        self::assertSame([], $empty['items']);
+
+        $catalog = $catalogClass::fromArray(['name' => 'Winter', 'unknown' => 1]);
+        self::assertSame('Winter', $catalog->getName());
+        self::assertFalse($catalog->hasMain());
+
+        $main = new ($ns . '\\ItemTransfer')();
+        self::assertSame($main, $catalogClass::fromArray(['main' => $main])->getMain());
+    }
+
+    public function testCloneIsDeep(): void
+    {
+        $ns = $this->generateCatalog();
+        $catalogClass = $ns . '\\CatalogTransfer';
+        $itemClass = $ns . '\\ItemTransfer';
+        $value = new ValueObject();
+
+        $original = (new $catalogClass())
+            ->setMain((new $itemClass())->setName('Shirt'))
+            ->addItem((new $itemClass())->setName('Hat'))
+            ->setCreatedAt(new DateTime('2026-01-01'))
+            ->addStatus(Status::Active)
+            ->addValue($value);
+
+        $clone = clone $original;
+        $clone->getMain()->setName('changed');
+        $clone->getItems()[0]->setName('changed');
+        $clone->addItem(new $itemClass());
+        $clone->getCreatedAt()->modify('+1 day');
+
+        self::assertSame('Shirt', $original->getMain()->getName());
+        self::assertSame('Hat', $original->getItems()[0]->getName());
+        self::assertCount(1, $original->getItems());
+        self::assertSame('2026-01-01', $original->getCreatedAt()->format('Y-m-d'));
+        self::assertSame(Status::Active, $clone->getStatuses()[0]);
+        // userland objects are not cloned, only the collection
+        self::assertSame($value, $clone->getValues()[0]);
+    }
+
+    public function testCloneIsOnlyGeneratedWhenNeeded(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string"/><property name="tags" type="string[]"/></transfer>');
+
+        $ns = $this->generateAndLoad($this->createConfig());
+
+        self::assertFalse(method_exists($ns . '\\UserTransfer', '__clone'));
+    }
+
     public function testConflictingShortClassNamesAreNotImported(): void
     {
         $this->writeSchema('schemas/a.xml', sprintf(
@@ -241,6 +405,48 @@ class GeneratorTest extends TestCase
         $this->generateAndLoad($this->createConfig());
     }
 
+    public function testUnchangedFilesAreNotRewritten(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string"/></transfer>'
+            . '<transfer name="Role"><property name="name" type="string"/></transfer>');
+        $config = $this->createConfig();
+        $service = new TransferService(new TransferServiceFactory());
+        $collection = $service->parse($config);
+
+        $paths = $service->generate($config, $collection, fn () => null);
+        self::assertCount(2, $paths);
+
+        $user = $config->getOutputDirectory() . '/UserTransfer.php';
+        $role = $config->getOutputDirectory() . '/RoleTransfer.php';
+        touch($user, 1000);
+        touch($role, 1000);
+        file_put_contents($role, 'outdated');
+        clearstatcache();
+
+        $progress = 0;
+        self::assertSame($paths, $service->generate($config, $collection, function () use (&$progress) {
+            $progress++;
+        }));
+        clearstatcache();
+
+        self::assertSame(2, $progress);
+        self::assertSame(1000, filemtime($user));
+        self::assertStringContainsString('class RoleTransfer', (string)file_get_contents($role));
+    }
+
+    public function testRenderDoesNotWriteAnything(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string"/></transfer>');
+        $config = $this->createConfig();
+        $service = new TransferService(new TransferServiceFactory());
+
+        $files = $service->render($config, $service->parse($config));
+
+        self::assertSame([$config->getOutputDirectory() . '/UserTransfer.php'], array_keys($files));
+        self::assertStringContainsString('class UserTransfer', $files[$config->getOutputDirectory() . '/UserTransfer.php']);
+        self::assertDirectoryDoesNotExist($config->getOutputDirectory());
+    }
+
     private function assertReturnType(string $class, string $method, string $expected): void
     {
         $type = (new ReflectionMethod($class, $method))->getReturnType();
@@ -262,6 +468,36 @@ class GeneratorTest extends TestCase
                 <property name="name" type="string"/>
             </transfer>
             XML);
+
+        return $this->generateAndLoad($this->createConfig());
+    }
+
+    private function generateCatalog(): string
+    {
+        $this->writeSchema('schemas/catalog.xml', sprintf(
+            <<<'XML'
+                <transfer name="Catalog">
+                    <property name="name" type="string"/>
+                    <property name="note" type="string" isNullable="true"/>
+                    <property name="main" type="Item"/>
+                    <property name="items" type="Item[]" singular="item"/>
+                    <property name="tags" type="string[]" singular="tag"/>
+                    <property name="createdAt" type="DateTime"/>
+                    <property name="publishedAt" type="DateTimeInterface"/>
+                    <property name="status" type="%1$s"/>
+                    <property name="statuses" type="%1$s[]" singular="status"/>
+                    <property name="size" type="%2$s"/>
+                    <property name="dates" type="DateTime[]" singular="date"/>
+                    <property name="values" type="%3$s[]" singular="value"/>
+                </transfer>
+                <transfer name="Item">
+                    <property name="name" type="string"/>
+                </transfer>
+                XML,
+            Status::class,
+            Size::class,
+            ValueObject::class,
+        ));
 
         return $this->generateAndLoad($this->createConfig());
     }

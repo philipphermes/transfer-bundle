@@ -115,6 +115,9 @@ Create XML schema files in your configured schema directories (default: `transfe
 | `description` | No | Property description (used in OpenAPI docs) |
 | `singular` | No | Singular name used for the `addX()` method of `[]` properties (default: the property name) |
 | `isNullable` | No | Whether the property can be null (`true`/`false`/`1`/`0`) |
+| `default` | No | Initial value for `string`, `int`, `float` and `bool` properties, converted to the property type |
+| `example` | No | Example value for the OpenAPI docs |
+| `deprecated` | No | Marks the property and its accessors `@deprecated` (and `deprecated` in the OpenAPI docs) |
 
 Names of transfers, properties and `singular` must be valid PHP identifiers, and the generated
 accessors must not collide (method names are case-insensitive, so `foo` and `Foo` can't coexist).
@@ -131,11 +134,30 @@ accessors must not collide (method names are case-insensitive, so `foo` and `Foo
 
 Any other type is reported as an error.
 
+### Schema Validation
+
+Every file is validated against `transfer.xsd`. Violations such as a misspelled attribute (`isNulable="true"`) are
+reported as warnings with file and line, parsing continues as before.
+
 ### Generated Methods
 
 For every property the generator creates `getX()`, `setX()` and `hasX()` (`true` if the property is set and not
 null). `[]` properties additionally get `addX()`. Getters of `[]` properties always return a collection (an empty
 one if unset or set to `null`).
+
+Every transfer also gets:
+
+| Method | Description |
+|--------|-------------|
+| `toArray(): array` | Converts the transfer recursively: nested transfers become arrays, collections plain arrays, dates `DATE_ATOM` strings and enums their value (backed) or name. Every property is present, unset ones are `null`. |
+| `static fromArray(array $data): self` | The reverse of `toArray()`. Missing keys stay unset, unknown keys are ignored, already converted values (e.g. a transfer object) are accepted as well. |
+| `__clone()` | Makes `clone` deep for nested transfers, `ArrayObject` collections and `DateTime` values, so a clone never shares state with the original. Only generated when needed. |
+
+```php
+$user = UserTransfer::fromArray(['email' => 'jane@example.com', 'addresses' => [['street' => 'Main St']]]);
+$user->getAddresses()[0]; // AddressTransfer
+$user->toArray();         // ['email' => 'jane@example.com', 'password' => null, 'addresses' => [['street' => 'Main St']], 'roles' => []]
+```
 
 ### Generating Transfers
 
@@ -147,6 +169,14 @@ php bin/console transfer:generate
 
 Options:
 - `--clean-disable` - Keep stale transfers in the output directory
+- `--check` - Don't write anything, only check whether the generated transfers are up to date. Lists new, changed and
+  stale files and exits with a non-zero code if there are any, e.g. for CI:
+
+```shell
+php bin/console transfer:generate --check
+```
+
+Files whose content didn't change are not rewritten, so their modification time stays the same.
 
 After a successful generation, generated transfers that no longer exist in the schemas are removed from the output
 directory. Only top-level files carrying the `This file is auto-generated.` header are removed. If parsing fails, the
@@ -209,6 +239,11 @@ class UserApiController extends AbstractController
     }
 }
 ```
+
+Property attributes in the generated `OA\Property`:
+- `description`, `example` and `default` from the XML
+- `nullable: true` for nullable non-collection properties, `deprecated: true` for deprecated ones
+- backed enums get their backing type and `enum` with the case values, pure enums `type: 'string'` with the case names
 
 > [!NOTE]
 > Child transfers do not inherit `api="true"` - you must set it explicitly on each transfer.

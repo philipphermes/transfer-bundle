@@ -15,8 +15,18 @@ readonly class TransferCleaner implements TransferCleanerInterface
      */
     public function clean(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): void
     {
+        foreach ($this->findStale($generatorConfigTransfer, $keepFiles) as $staleFile) {
+            unlink($staleFile);
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findStale(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): array
+    {
         if (!is_dir($generatorConfigTransfer->getOutputDirectory())) {
-            return;
+            return [];
         }
 
         $keep = [];
@@ -25,8 +35,9 @@ readonly class TransferCleaner implements TransferCleanerInterface
         }
 
         $finder = new Finder();
-        $finder->files()->in($generatorConfigTransfer->getOutputDirectory())->depth(0)->name('*Transfer.php');
+        $finder->files()->in($generatorConfigTransfer->getOutputDirectory())->depth(0)->name('*Transfer.php')->sortByName();
 
+        $staleFiles = [];
         foreach ($finder as $file) {
             $absoluteFilePath = $file->getRealPath();
 
@@ -34,7 +45,9 @@ readonly class TransferCleaner implements TransferCleanerInterface
                 continue;
             }
 
-            unlink($absoluteFilePath);
+            $staleFiles[] = $absoluteFilePath;
         }
+
+        return $staleFiles;
     }
 }

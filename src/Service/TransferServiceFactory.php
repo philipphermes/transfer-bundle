@@ -6,6 +6,10 @@ namespace PhilippHermes\TransferBundle\Service;
 
 use PhilippHermes\TransferBundle\Service\Model\Cleaner\TransferCleaner;
 use PhilippHermes\TransferBundle\Service\Model\Cleaner\TransferCleanerInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generator\ClassGeneratorSteps\ClassGeneratorStepInterface;
+use PhilippHermes\TransferBundle\Service\Model\Generator\ClassGeneratorSteps\CloneClassGeneratorStep;
+use PhilippHermes\TransferBundle\Service\Model\Generator\ClassGeneratorSteps\FromArrayClassGeneratorStep;
+use PhilippHermes\TransferBundle\Service\Model\Generator\ClassGeneratorSteps\ToArrayClassGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Generator\Generator;
 use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\AdderPropertyGeneratorStep;
@@ -27,6 +31,7 @@ class TransferServiceFactory
     {
         return new Generator(
             $this->createPropertyGeneratorSteps(),
+            $this->createClassGeneratorSteps(),
         );
     }
 
@@ -57,6 +62,18 @@ class TransferServiceFactory
             new HasPropertyGeneratorStep(),
             new SetterPropertyGeneratorStep(),
             new AdderPropertyGeneratorStep(),
+        ];
+    }
+
+    /**
+     * @return array<ClassGeneratorStepInterface>
+     */
+    protected function createClassGeneratorSteps(): array
+    {
+        return [
+            new ToArrayClassGeneratorStep(),
+            new FromArrayClassGeneratorStep(),
+            new CloneClassGeneratorStep(),
         ];
     }
 }

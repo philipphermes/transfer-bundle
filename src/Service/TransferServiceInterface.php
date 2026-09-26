@@ -15,6 +15,16 @@ interface TransferServiceInterface
     public function parse(GeneratorConfigTransfer $generatorConfigTransfer): TransferCollectionTransfer;
 
     /**
+     * Renders all transfers in memory without writing anything.
+     *
+     * @param GeneratorConfigTransfer $generatorConfigTransfer
+     * @param TransferCollectionTransfer $transferCollectionTransfer
+     *
+     * @return array<string, string> file path => file content
+     */
+    public function render(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer): array;
+
+    /**
      * @param GeneratorConfigTransfer $generatorConfigTransfer
      * @param TransferCollectionTransfer $transferCollectionTransfer
      * @param callable $progressCallback
@@ -32,4 +42,14 @@ interface TransferServiceInterface
      * @return void
      */
     public function clean(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): void;
+
+    /**
+     * Returns the generated transfers in the output directory that are not in $keepFiles.
+     *
+     * @param GeneratorConfigTransfer $generatorConfigTransfer
+     * @param array<string> $keepFiles
+     *
+     * @return array<string> absolute paths
+     */
+    public function findStale(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): array;
 }

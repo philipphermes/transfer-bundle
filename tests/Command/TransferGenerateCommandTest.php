@@ -81,6 +81,58 @@ class TransferGenerateCommandTest extends TestCase
         self::assertStringContainsString('did not match any directory', $tester->getDisplay());
     }
 
+    public function testCheckFailsWithoutWritingWhenOutputIsMissing(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string"/></transfer>');
+
+        $tester = $this->execute(['--check' => true]);
+
+        self::assertSame(Command::FAILURE, $tester->getStatusCode());
+        self::assertStringContainsString('new: ' . $this->tempDir . '/output/UserTransfer.php', $tester->getDisplay());
+        self::assertDirectoryDoesNotExist($this->tempDir . '/output');
+    }
+
+    public function testCheckSucceedsAfterGeneration(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string"/></transfer>');
+        $command = $this->createCommand(new TransferService(new TransferServiceFactory()));
+
+        (new CommandTester($command))->execute([]);
+        $tester = new CommandTester($command);
+        $tester->execute(['--check' => true]);
+
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        self::assertStringContainsString('up to date', $tester->getDisplay());
+    }
+
+    public function testCheckReportsChangedAndStaleFiles(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string"/></transfer>');
+        $user = $this->writeFile('output/UserTransfer.php', 'outdated');
+        $stale = $this->writeFile('output/StaleTransfer.php', self::STALE);
+
+        $tester = $this->execute(['--check' => true]);
+
+        self::assertSame(Command::FAILURE, $tester->getStatusCode());
+        self::assertStringContainsString('changed: ' . $user, $tester->getDisplay());
+        self::assertStringContainsString('stale: ' . $stale, $tester->getDisplay());
+        self::assertSame('outdated', file_get_contents($user));
+        self::assertFileExists($stale);
+    }
+
+    public function testCheckIgnoresStaleFilesWhenCleanIsDisabled(): void
+    {
+        $this->writeSchema('schemas/a.xml', '<transfer name="User"><property name="email" type="string"/></transfer>');
+        $command = $this->createCommand(new TransferService(new TransferServiceFactory()));
+        (new CommandTester($command))->execute([]);
+        $this->writeFile('output/StaleTransfer.php', self::STALE);
+
+        $tester = new CommandTester($command);
+        $tester->execute(['--check' => true, '--clean-disable' => true]);
+
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+    }
+
     /**
      * Code quality (non-atomic generation): the output dir must not be cleaned before generation succeeded.
      */

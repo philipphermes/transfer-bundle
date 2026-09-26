@@ -18,9 +18,20 @@ class GetterPropertyGeneratorStep implements PropertyGeneratorStepInterface
         $method = $class->addMethod('get' . ucfirst($propertyTransfer->getName()));
         $method->setPublic();
 
+        if ($propertyTransfer->isDeprecated()) {
+            $method->addComment('@deprecated');
+        }
+
         if ($propertyTransfer->isCollection()) {
             $method->setReturnType($propertyTransfer->getType());
-            $method->setComment('@return ' . $propertyTransfer->getAnnotationType());
+            $method->addComment('@return ' . $propertyTransfer->getAnnotationType());
+
+            if ($propertyTransfer->isAlwaysInitialized()) {
+                $method->addBody('return $this->' . $propertyTransfer->getName() . ';');
+
+                return;
+            }
+
             $method->addBody(sprintf(
                 'return $this->%s ??= %s;',
                 $propertyTransfer->getName(),
@@ -31,7 +42,7 @@ class GetterPropertyGeneratorStep implements PropertyGeneratorStepInterface
         }
 
         $method->setReturnType(($propertyTransfer->isNullable() ? '?' :  '') . $propertyTransfer->getType());
-        $method->setComment('@return ' . $propertyTransfer->getAnnotationType() . ($propertyTransfer->isNullable() ? '|null' : ''));
+        $method->addComment('@return ' . $propertyTransfer->getAnnotationType() . ($propertyTransfer->isNullable() ? '|null' : ''));
         $method->addBody('return $this->' . $propertyTransfer->getName() . ';');
     }
 }
