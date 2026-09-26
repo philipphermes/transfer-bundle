@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Type;
 
+use InvalidArgumentException;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
@@ -14,11 +15,6 @@ class PropertyTypeMapper
     public const array PHP_TYPES = [
         'int', 'float', 'string', 'bool', 'array', 'object', 'mixed',
     ];
-
-    /**
-     * @var array<string, string>
-     */
-    protected static array $checkedObjects = [];
 
     /**
      * @var array<string, true>
@@ -32,7 +28,6 @@ class PropertyTypeMapper
     public function setDefinedTransfers(?TransferCollectionTransfer $transferCollectionTransfer): void
     {
         $this->definedTransfers = [];
-        self::$checkedObjects = [];
         if ($transferCollectionTransfer) {
             foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
                 $this->definedTransfers[$transfer->getName()] = true;
@@ -41,135 +36,105 @@ class PropertyTypeMapper
     }
 
     /**
+     * Resolves the XML type of a property:
+     * - PHP types are kept as-is
+     * - defined transfers become `{namespace}\{Name}Transfer`
+     * - existing classes, interfaces and enums are kept as FQCN
+     * - `X[]` becomes `array` for PHP types and `ArrayObject` otherwise
+     *
+     * @param GeneratorConfigTransfer $generatorConfigTransfer
      * @param PropertyTransfer $propertyTransfer
      * @param string $type
+     *
+     * @throws InvalidArgumentException if the type can not be resolved
      *
      * @return PropertyTransfer
      */
     public function addTypes(GeneratorConfigTransfer $generatorConfigTransfer, PropertyTransfer $propertyTransfer, string $type): PropertyTransfer
     {
-        $propertyTransfer
-            ->setType($this->getType($type))
-            ->setSingularType($this->getSingularType($type));
+        $type = trim($type);
 
-        $propertyTransfer->setAnnotationType($this->getAnnotationType($propertyTransfer));
-        $propertyTransfer->setSingularAnnotationType($this->getSingularAnnotationType($propertyTransfer));
+        if (str_ends_with($type, '[]')) {
+            [$singularType, $isSingularTransfer] = $this->resolveType($generatorConfigTransfer, substr($type, 0, -2));
 
-        if (!in_array($propertyTransfer->getType(), self::PHP_TYPES, true)) {
-            if (str_contains($propertyTransfer->getType(), 'Transfer')) {
-                $propertyTransfer->setType($generatorConfigTransfer->getNamespace() . '\\' . $propertyTransfer->getType());
-            }
+            $propertyTransfer
+                ->setType(in_array($singularType, self::PHP_TYPES, true) ? 'array' : 'ArrayObject')
+                ->setIsTransfer(false)
+                ->setSingularType($singularType)
+                ->setIsSingularTransfer($isSingularTransfer)
+                ->setSingularAnnotationType($this->getAnnotation($singularType, $isSingularTransfer));
+
+            $propertyTransfer->setAnnotationType(sprintf(
+                '%s<array-key, %s>',
+                $propertyTransfer->getType(),
+                $propertyTransfer->getSingularAnnotationType(),
+            ));
+
+            return $propertyTransfer;
         }
 
-        if ($propertyTransfer->getSingularType() && !in_array($propertyTransfer->getSingularType(), self::PHP_TYPES, true)) {
-            if (str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
-                $propertyTransfer->setSingularType($generatorConfigTransfer->getNamespace() . '\\' . $propertyTransfer->getSingularType());
-            }
-        }
+        [$resolvedType, $isTransfer] = $this->resolveType($generatorConfigTransfer, $type);
 
-        return $propertyTransfer;
+        return $propertyTransfer
+            ->setType($resolvedType)
+            ->setIsTransfer($isTransfer)
+            ->setSingularType(null)
+            ->setIsSingularTransfer(false)
+            ->setAnnotationType($this->getAnnotation($resolvedType, $isTransfer))
+            ->setSingularAnnotationType(null);
     }
 
     /**
+     * @param GeneratorConfigTransfer $generatorConfigTransfer
      * @param string $type
      *
-     * @return string
+     * @throws InvalidArgumentException
+     *
+     * @return array{string, bool} resolved type and whether it is a generated transfer
      */
-    protected function getType(string $type): string
+    protected function resolveType(GeneratorConfigTransfer $generatorConfigTransfer, string $type): array
     {
+        $type = ltrim($type, '\\');
+
         if (in_array($type, self::PHP_TYPES, true)) {
-            return $type;
-        }
-
-        if (str_contains($type, '[]')) {
-            $basicType = str_replace('[]', '', $type);
-            if (in_array($basicType, self::PHP_TYPES, true)) {
-                return 'array';
-            }
-
-            return 'ArrayObject';
-        }
-
-        return $this->extractType($type);
-    }
-
-    /**
-     * @param string $type
-     *
-     * @return string|null
-     */
-    protected function getSingularType(string $type): ?string
-    {
-        if (str_contains($type, '[]')) {
-            return $this->extractType(
-                str_replace('[]', '', $type),
-            );
-        }
-
-        return null;
-    }
-
-    /**
-     * @param string $type
-     *
-     * @return string
-     */
-    protected function extractType(string $type): string
-    {
-        if (in_array($type, self::PHP_TYPES, true)) {
-            return $type;
-        }
-
-        if (isset(self::$checkedObjects[$type])) {
-            return self::$checkedObjects[$type];
+            return [$type, false];
         }
 
         if (isset($this->definedTransfers[$type])) {
-            return self::$checkedObjects[$type] = $type . 'Transfer';
+            return [$generatorConfigTransfer->getNamespace() . '\\' . $type . 'Transfer', true];
         }
 
-        try {
-            /** @phpstan-ignore-next-line */
-            $ref = new ReflectionClass($type);
-            if ($ref->isInternal()) {
-                return self::$checkedObjects[$type] = $type;
-            } else {
-                return self::$checkedObjects[$type] = $type . 'Transfer';
-            }
-        } catch (\ReflectionException) {
-            return self::$checkedObjects[$type] = $type . 'Transfer';
+        if (class_exists($type) || interface_exists($type) || enum_exists($type)) {
+            return [(new ReflectionClass($type))->getName(), false];
         }
+
+        throw new InvalidArgumentException(sprintf(
+            "Unknown type '%s': it is neither a PHP type, a defined transfer nor an existing class, interface or enum",
+            $type,
+        ));
     }
 
     /**
-     * @param PropertyTransfer $propertyTransfer
+     * Transfers live in the generated namespace and are referenced by their short name,
+     * classes are referenced fully qualified.
+     *
+     * @param string $type
+     * @param bool $isTransfer
      *
      * @return string
      */
-    public function getAnnotationType(PropertyTransfer $propertyTransfer): string
+    protected function getAnnotation(string $type, bool $isTransfer): string
     {
-        if ($propertyTransfer->getSingularType()) {
-            return sprintf(
-                '%s<array-key, %s>',
-                $propertyTransfer->getType(),
-                $propertyTransfer->getSingularType(),
-            );
+        if (in_array($type, self::PHP_TYPES, true)) {
+            return $type;
         }
 
-        return $propertyTransfer->getType();
-    }
+        if ($isTransfer) {
+            $parts = explode('\\', $type);
 
-    /**
-     * @param PropertyTransfer $propertyTransfer
-     *
-     * @return string|null
-     */
-    public function getSingularAnnotationType(PropertyTransfer $propertyTransfer): ?string
-    {
-        if ($propertyTransfer->getSingularType()) {
-            return $propertyTransfer->getSingularType();
+            return end($parts);
         }
 
-        return null;
+        return '\\' . $type;
     }
 }

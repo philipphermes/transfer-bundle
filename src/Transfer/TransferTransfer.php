@@ -15,13 +15,6 @@ class TransferTransfer
      */
     protected ArrayObject $properties;
 
-    /**
-     * @var ArrayObject<array-key, PropertyTransfer>
-     */
-    protected ArrayObject $sensitiveProperties;
-
-    protected ?PropertyTransfer $identifierProperty = null;
-
     protected bool $isApi = false;
 
     protected ?string $apiAlias = null;
@@ -71,54 +64,6 @@ class TransferTransfer
     {
         if (!isset($this->properties)) $this->properties = new ArrayObject();
         $this->properties->append($property);
-        return $this;
-    }
-
-    /**
-     * @return ArrayObject<array-key, PropertyTransfer>
-     */
-    public function getSensitiveProperties(): ArrayObject
-    {
-        if (!isset($this->sensitiveProperties)) $this->sensitiveProperties = new ArrayObject();
-        return $this->sensitiveProperties;
-    }
-
-    /**
-     * @param ArrayObject<array-key, PropertyTransfer> $sensitiveProperties
-     * @return TransferTransfer
-     */
-    public function setSensitiveProperties(ArrayObject $sensitiveProperties): TransferTransfer
-    {
-        $this->sensitiveProperties = $sensitiveProperties;
-        return $this;
-    }
-
-    /**
-     * @param PropertyTransfer $property
-     * @return $this
-     */
-    public function addSensitiveProperty(PropertyTransfer $property): TransferTransfer
-    {
-        if (!isset($this->sensitiveProperties)) $this->sensitiveProperties = new ArrayObject();
-        $this->sensitiveProperties->append($property);
-        return $this;
-    }
-
-    /**
-     * @return PropertyTransfer|null
-     */
-    public function getIdentifierProperty(): ?PropertyTransfer
-    {
-        return $this->identifierProperty;
-    }
-
-    /**
-     * @param PropertyTransfer|null $identifierProperty
-     * @return TransferTransfer
-     */
-    public function setIdentifierProperty(?PropertyTransfer $identifierProperty): TransferTransfer
-    {
-        $this->identifierProperty = $identifierProperty;
         return $this;
     }
 

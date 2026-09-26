@@ -50,10 +50,11 @@ class TransferGenerateCommand extends Command
      */
     protected function configure(): void
     {
-        $this
-            ->setName('transfer:generate')
-            ->setDescription('generates transfers from xml schema')
-            ->addOption(self::OPTION_DISABLE_CLEAN, mode: InputOption::VALUE_NONE);
+        $this->addOption(
+            self::OPTION_DISABLE_CLEAN,
+            mode: InputOption::VALUE_NONE,
+            description: 'Keep stale generated transfers in the output directory',
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -83,9 +84,12 @@ class TransferGenerateCommand extends Command
             return Command::FAILURE;
         }
 
-        if (!$input->getOption(self::OPTION_DISABLE_CLEAN)) {
-            $io->info('Cleaning output directory');
-            $this->transferService->clean($this->generatorConfig);
+        if ($transferCollectionTransfer->getWarnings()) {
+            $io->warning('Warnings encountered while parsing schemas');
+
+            foreach ($transferCollectionTransfer->getWarnings() as $warning) {
+                $io->writeln(' - ' . $warning);
+            }
         }
 
         $transfers = $transferCollectionTransfer->getTransfers()->getArrayCopy();
@@ -99,7 +103,7 @@ class TransferGenerateCommand extends Command
         $progressBar = $io->createProgressBar(count($transfers));
         $progressBar->start();
 
-        $this->transferService->generate(
+        $generatedFiles = $this->transferService->generate(
             $this->generatorConfig,
             $transferCollectionTransfer,
             fn () => $progressBar->advance(),
@@ -107,6 +111,11 @@ class TransferGenerateCommand extends Command
 
         $progressBar->finish();
         $io->newLine(2);
+
+        if (!$input->getOption(self::OPTION_DISABLE_CLEAN)) {
+            $io->info('Removing stale transfers from output directory');
+            $this->transferService->clean($this->generatorConfig, $generatedFiles);
+        }
 
         $io->success('Transfer generation completed successfully');
 

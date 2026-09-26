@@ -17,13 +17,21 @@ class GetterPropertyGeneratorStep implements PropertyGeneratorStepInterface
     {
         $method = $class->addMethod('get' . ucfirst($propertyTransfer->getName()));
         $method->setPublic();
-        $method->setReturnType(($propertyTransfer->isNullable() ? '?' :  '') . $propertyTransfer->getType());
-        $method->setComment('@return ' . $propertyTransfer->getAnnotationType() . ($propertyTransfer->isNullable() ? '|null' : ''));
 
-        if ($propertyTransfer->getType() === 'ArrayObject') {
-            $method->addBody('if (!isset($this->' . $propertyTransfer->getName() . ')) $this->' . $propertyTransfer->getName() . ' = new ArrayObject([]);');
+        if ($propertyTransfer->isCollection()) {
+            $method->setReturnType($propertyTransfer->getType());
+            $method->setComment('@return ' . $propertyTransfer->getAnnotationType());
+            $method->addBody(sprintf(
+                'return $this->%s ??= %s;',
+                $propertyTransfer->getName(),
+                $propertyTransfer->getType() === 'ArrayObject' ? 'new ArrayObject([])' : '[]',
+            ));
+
+            return;
         }
 
+        $method->setReturnType(($propertyTransfer->isNullable() ? '?' :  '') . $propertyTransfer->getType());
+        $method->setComment('@return ' . $propertyTransfer->getAnnotationType() . ($propertyTransfer->isNullable() ? '|null' : ''));
         $method->addBody('return $this->' . $propertyTransfer->getName() . ';');
     }
 }

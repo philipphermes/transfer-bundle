@@ -15,6 +15,8 @@ class PropertyTransfer
     protected ?string $singularAnnotationType = null;
     protected ?string $description = null;
     protected bool $isNullable = false;
+    protected bool $isTransfer = false;
+    protected bool $isSingularTransfer = false;
 
     /**
      * @return string
@@ -158,5 +160,51 @@ class PropertyTransfer
     {
         $this->isNullable = $isNullable;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransfer(): bool
+    {
+        return $this->isTransfer;
+    }
+
+    /**
+     * @param bool $isTransfer
+     * @return PropertyTransfer
+     */
+    public function setIsTransfer(bool $isTransfer): PropertyTransfer
+    {
+        $this->isTransfer = $isTransfer;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSingularTransfer(): bool
+    {
+        return $this->isSingularTransfer;
+    }
+
+    /**
+     * @param bool $isSingularTransfer
+     * @return PropertyTransfer
+     */
+    public function setIsSingularTransfer(bool $isSingularTransfer): PropertyTransfer
+    {
+        $this->isSingularTransfer = $isSingularTransfer;
+        return $this;
+    }
+
+    /**
+     * Whether the property is declared as a list (`X[]`).
+     *
+     * @return bool
+     */
+    public function isCollection(): bool
+    {
+        return $this->singularType !== null;
     }
 }

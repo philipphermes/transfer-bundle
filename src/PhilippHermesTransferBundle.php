@@ -77,20 +77,19 @@ class PhilippHermesTransferBundle extends AbstractBundle
      */
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        try {
-            $outputDir = $builder->getParameter('transfer.output_dir');
-        } catch (\Exception) {
-            $projectDir = $builder->getParameter('kernel.project_dir');
-            if (!is_string($projectDir)) {
-                return;
-            }
-            $outputDir = $projectDir . '/src/Generated/Transfers';
+        $outputDir = '%kernel.project_dir%/src/Generated/Transfers';
+        $namespace = 'App\\Generated\\Transfers';
+
+        foreach ($builder->getExtensionConfig($this->extensionAlias) as $config) {
+            $outputDir = $config['output_dir'] ?? $outputDir;
+            $namespace = $config['namespace'] ?? $namespace;
         }
 
         try {
-            $namespace = $builder->getParameter('transfer.namespace');
+            $outputDir = $builder->getParameterBag()->resolveValue($outputDir);
+            $namespace = $builder->getParameterBag()->resolveValue($namespace);
         } catch (\Exception) {
-            $namespace = 'App\\Generated\\Transfers';
+            return;
         }
 
         if (!is_string($outputDir) || !is_string($namespace) || !is_dir($outputDir)) {
@@ -148,8 +147,8 @@ class PhilippHermesTransferBundle extends AbstractBundle
      */
     protected function aliasFromFile(string $fileContent, string $filePath): ?string
     {
-        if (preg_match("/public\s+const\s+API_ALIAS\s*=\s*'([^']+)'/", $fileContent, $matches)) {
-            return $matches[1];
+        if (preg_match("/public\s+const\s+API_ALIAS\s*=\s*'((?:[^'\\\\]|\\\\.)+)'/", $fileContent, $matches)) {
+            return stripslashes($matches[1]);
         }
 
         $filename = basename($filePath, '.php');

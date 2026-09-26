@@ -102,19 +102,40 @@ Create XML schema files in your configured schema directories (default: `transfe
 ```
 
 **Key features:**
-- Multiple XML files are supported and will be merged
-- Transfers with the same name across files are combined
-- First definition of a property takes precedence
+- Multiple XML files are supported and will be merged (files are read in sorted path order)
+- Transfers with the same name across files are combined; `api="true"` in any definition makes it an API transfer
+- First definition of a property takes precedence; a later definition with a different type produces a warning
 
 ### Property Attributes
 
 | Attribute | Required | Description |
 |-----------|----------|-------------|
 | `name` | Yes | Property name |
-| `type` | Yes | PHP type (`string`, `int`, `bool`, `float`, `array`, `Transfer`, `Transfer[]`) |
+| `type` | Yes | Property type, see [Types](#types) |
 | `description` | No | Property description (used in OpenAPI docs) |
-| `singular` | No | Singular name for array properties (enables `addX()` method) |
-| `isNullable` | No | Whether the property can be null (`true`/`false`) |
+| `singular` | No | Singular name used for the `addX()` method of `[]` properties (default: the property name) |
+| `isNullable` | No | Whether the property can be null (`true`/`false`/`1`/`0`) |
+
+Names of transfers, properties and `singular` must be valid PHP identifiers, and the generated
+accessors must not collide (method names are case-insensitive, so `foo` and `Foo` can't coexist).
+
+### Types
+
+| Type | Result |
+|------|--------|
+| `string`, `int`, `float`, `bool`, `array`, `object`, `mixed` | used as-is |
+| Name of a defined transfer, e.g. `Address` | `AddressTransfer` from the generated namespace |
+| Existing class, interface or enum, e.g. `DateTime`, `App\Enum\Status` | used as fully qualified name |
+| `X[]` of a PHP type, e.g. `string[]` | `array` |
+| `X[]` of a transfer or class, e.g. `Address[]` | `ArrayObject` |
+
+Any other type is reported as an error.
+
+### Generated Methods
+
+For every property the generator creates `getX()`, `setX()` and `hasX()` (`true` if the property is set and not
+null). `[]` properties additionally get `addX()`. Getters of `[]` properties always return a collection (an empty
+one if unset or set to `null`).
 
 ### Generating Transfers
 
@@ -125,7 +146,12 @@ php bin/console transfer:generate
 ```
 
 Options:
-- `--clean-disable` - Skip cleaning the output directory before generation
+- `--clean-disable` - Keep stale transfers in the output directory
+
+After a successful generation, generated transfers that no longer exist in the schemas are removed from the output
+directory. Only top-level files carrying the `This file is auto-generated.` header are removed. If parsing fails, the
+command prints the errors, exits with a non-zero code and doesn't touch the output directory. Warnings (e.g. a schema
+directory that matches nothing) are printed but don't fail the command.
 
 ---
 
@@ -160,7 +186,7 @@ Use in your controllers with NelmioApiDocBundle:
 ```php
 use App\Generated\Transfers\UserTransfer;
 use App\Generated\Transfers\ErrorTransfer;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 
 class UserApiController extends AbstractController
