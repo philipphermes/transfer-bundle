@@ -215,7 +215,9 @@ readonly class TransferParser implements TransferParserInterface
                 }
             }
 
-            $this->validateAccessors($transfer, $collection);
+            if ($this->validateAccessors($transfer, $collection)) {
+                $this->validateConstants($transfer, $collection);
+            }
         }
 
         return $collection;
@@ -353,10 +355,12 @@ readonly class TransferParser implements TransferParserInterface
      * @param TransferTransfer $transfer
      * @param TransferCollectionTransfer $collection
      *
-     * @return void
+     * @return bool false if a collision was reported
      */
-    protected function validateAccessors(TransferTransfer $transfer, TransferCollectionTransfer $collection): void
+    protected function validateAccessors(TransferTransfer $transfer, TransferCollectionTransfer $collection): bool
     {
+        $isValid = true;
+
         /** @var array<string, string> $methodOwners lowercase method name => property name */
         $methodOwners = [];
 
@@ -372,6 +376,7 @@ readonly class TransferParser implements TransferParserInterface
                         $property->getName(),
                         $owner,
                     ));
+                    $isValid = false;
 
                     break;
                 }
@@ -380,6 +385,45 @@ readonly class TransferParser implements TransferParserInterface
             foreach ($this->getAccessorNames($property) as $method) {
                 $methodOwners[strtolower($method)] ??= $property->getName();
             }
+        }
+
+        return $isValid;
+    }
+
+    /**
+     * Each property gets a constant with its name in UPPER_SNAKE_CASE, which must not collide with another one.
+     *
+     * @param TransferTransfer $transfer
+     * @param TransferCollectionTransfer $collection
+     *
+     * @return void
+     */
+    protected function validateConstants(TransferTransfer $transfer, TransferCollectionTransfer $collection): void
+    {
+        /** @var array<string, string> $constantOwners constant name => owner description */
+        $constantOwners = [];
+
+        if ($transfer->isApi()) {
+            $constantOwners['API_ALIAS'] = 'the API_ALIAS constant';
+        }
+
+        foreach ($transfer->getProperties() as $property) {
+            $constant = $property->getConstantName();
+            $owner = $constantOwners[$constant] ?? null;
+
+            if ($owner !== null) {
+                $collection->addError(sprintf(
+                    "Transfer '%s': constant '%s' of property '%s' collides with %s",
+                    $transfer->getName(),
+                    $constant,
+                    $property->getName(),
+                    $owner,
+                ));
+
+                continue;
+            }
+
+            $constantOwners[$constant] = sprintf("property '%s'", $property->getName());
         }
     }
 

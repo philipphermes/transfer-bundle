@@ -193,6 +193,23 @@ class TransferParserTest extends TestCase
         self::assertStringContainsString('addItem', $errors);
     }
 
+    public function testCollidingConstantNamesAreReported(): void
+    {
+        $this->writeSchema('schemas/a.xml', <<<'XML'
+            <transfer name="User" api="true">
+                <property name="fooBar" type="string"/>
+                <property name="foo_bar" type="string"/>
+                <property name="apiAlias" type="string"/>
+            </transfer>
+            XML);
+
+        $errors = $this->parse($this->createConfig())->getErrors();
+
+        self::assertCount(2, $errors);
+        self::assertStringContainsString("constant 'FOO_BAR' of property 'foo_bar' collides with property 'fooBar'", $errors[0]);
+        self::assertStringContainsString("constant 'API_ALIAS' of property 'apiAlias' collides with the API_ALIAS constant", $errors[1]);
+    }
+
     /**
      * Finding #9: unknown types silently became non-existent {X}Transfer classes.
      */

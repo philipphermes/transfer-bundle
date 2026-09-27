@@ -24,7 +24,7 @@ class ToArrayClassGeneratorStep extends AbstractClassGeneratorStep
 
         $method->addBody('return [');
         foreach ($transferTransfer->getProperties() as $property) {
-            $method->addBody(sprintf("\t'%s' => %s,", $property->getName(), $this->resolveValue($property)));
+            $method->addBody(sprintf("\tself::%s => %s,", $property->getConstantName(), $this->resolveValue($property)));
         }
         $method->addBody('];');
     }

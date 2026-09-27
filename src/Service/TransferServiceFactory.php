@@ -13,6 +13,7 @@ use PhilippHermes\TransferBundle\Service\Model\Generator\ClassGeneratorSteps\ToA
 use PhilippHermes\TransferBundle\Service\Model\Generator\Generator;
 use PhilippHermes\TransferBundle\Service\Model\Generator\GeneratorInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\AdderPropertyGeneratorStep;
+use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\ConstantPropertyGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\GetterPropertyGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\HasPropertyGeneratorStep;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
@@ -57,6 +58,7 @@ class TransferServiceFactory
     protected function createPropertyGeneratorSteps(): array
     {
         return [
+            new ConstantPropertyGeneratorStep(),
             new PropertyPropertyGeneratorStep(),
             new GetterPropertyGeneratorStep(),
             new HasPropertyGeneratorStep(),
