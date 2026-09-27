@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps;
 
+use BackedEnum;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Literal;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
+use ReflectionEnum;
+use ReflectionNamedType;
+use UnitEnum;
 
 class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
 {
+    protected const array DATE_TIME_TYPES = ['DateTime', 'DateTimeImmutable', 'DateTimeInterface'];
+
     /**
      * @inheritDoc
      */
@@ -21,6 +27,10 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
         $property->setType(($propertyTransfer->isNullable() ? '?' : '') . $propertyTransfer->getType());
         $property->addComment('@var ' . $propertyTransfer->getAnnotationType() . ($propertyTransfer->isNullable() ? '|null' : ''));
 
+        if ($propertyTransfer->isDeprecated()) {
+            $property->addComment('@deprecated');
+        }
+
         if ($transferTransfer->isApi()) {
             $property->addAttribute(
                 'OpenApi\Attributes\Property',
@@ -28,11 +38,11 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
             );
         }
 
-        if ($propertyTransfer->isNullable()) {
+        if ($propertyTransfer->hasDefaultValue()) {
+            $property->setValue($propertyTransfer->getDefaultValue());
+        } elseif ($propertyTransfer->isNullable()) {
             $property->setValue(null);
-        }
-
-        if ($propertyTransfer->getType() === 'array') {
+        } elseif ($propertyTransfer->getType() === 'array') {
             $property->setValue([]);
         }
     }
@@ -44,54 +54,95 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
      */
     protected function resolveOAAttributeArguments(PropertyTransfer $propertyTransfer): array
     {
-        $type = $this->resolveOAType($propertyTransfer->getType());
-        $singularType = $propertyTransfer->getSingularType() ? $this->resolveOAType($propertyTransfer->getSingularType()) : null;
-
         $arguments = [];
 
-        if (str_contains($propertyTransfer->getType(), 'Transfer')) {
-            $arguments['ref'] = Literal::new(
-                '\Nelmio\ApiDocBundle\Attribute\Model',
-                [
-                    'type' => $propertyTransfer->getType(),
-                ]
-            );
-        } else {
-            $arguments['type'] = $type;
+        if ($propertyTransfer->isTransfer()) {
+            $arguments['ref'] = $this->createModelReference($propertyTransfer->getType());
+        } elseif ($propertyTransfer->getType() !== 'mixed') {
+            $arguments += $this->resolveOATypeArguments($propertyTransfer->getType());
         }
 
-        if ($singularType) {
-            if ($propertyTransfer->getSingularType() && str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
-                $arguments['items'] = Literal::new(
-                    'OA\Items',
-                    [
-                        'ref' => Literal::new(
-                            '\Nelmio\ApiDocBundle\Attribute\Model',
-                            [
-                                'type' => $propertyTransfer->getSingularType(),
-                            ]
-                        ),
-                    ]
-                );
-            } else {
-                $arguments['items'] = Literal::new(
-                    'OA\Items',
-                    [
-                        'type' => $singularType,
-                    ],
-                );
+        if ($propertyTransfer->getDescription() !== null) {
+            $arguments['description'] = $propertyTransfer->getDescription();
+        }
+
+        if ($propertyTransfer->hasDefaultValue()) {
+            $arguments['default'] = $propertyTransfer->getDefaultValue();
+        }
+
+        if ($propertyTransfer->getExample() !== null) {
+            $arguments['example'] = $propertyTransfer->getExample();
+        }
+
+        $singularType = $propertyTransfer->getSingularType();
+
+        if ($singularType !== null) {
+            $items = [];
+
+            if ($propertyTransfer->isSingularTransfer()) {
+                $items['ref'] = $this->createModelReference($singularType);
+            } elseif ($singularType !== 'mixed') {
+                $items += $this->resolveOATypeArguments($singularType);
             }
+
+            if (in_array($singularType, self::DATE_TIME_TYPES, true)) {
+                $items['format'] = 'date-time';
+            }
+
+            $arguments['items'] = Literal::new('OA\Items', $items);
         }
 
-        if ($propertyTransfer->getType() === 'DateTime' || $propertyTransfer->getType() === 'DateTimeImmutable') {
+        if (in_array($propertyTransfer->getType(), self::DATE_TIME_TYPES, true)) {
             $arguments['format'] = 'date-time';
         }
 
-        if ($propertyTransfer->isNullable()) {
+        if ($propertyTransfer->isNullable() && !$propertyTransfer->isCollection()) {
             $arguments['nullable'] = true;
         }
 
+        if ($propertyTransfer->isDeprecated()) {
+            $arguments['deprecated'] = true;
+        }
+
         return $arguments;
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return Literal
+     */
+    protected function createModelReference(string $type): Literal
+    {
+        return Literal::new('\Nelmio\ApiDocBundle\Attribute\Model', ['type' => $type]);
+    }
+
+    /**
+     * Backed enums are documented with their backing type and cases.
+     *
+     * @param string $type
+     *
+     * @return array<string, mixed>
+     */
+    protected function resolveOATypeArguments(string $type): array
+    {
+        if (is_subclass_of($type, BackedEnum::class)) {
+            $backingType = (new ReflectionEnum($type))->getBackingType();
+
+            return [
+                'type' => $this->resolveOAType($backingType instanceof ReflectionNamedType ? $backingType->getName() : 'string'),
+                'enum' => array_map(fn (BackedEnum $case): int|string => $case->value, $type::cases()),
+            ];
+        }
+
+        if (is_subclass_of($type, UnitEnum::class)) {
+            return [
+                'type' => 'string',
+                'enum' => array_map(fn (UnitEnum $case): string => $case->name, $type::cases()),
+            ];
+        }
+
+        return ['type' => $this->resolveOAType($type)];
     }
 
     /**
@@ -102,25 +153,12 @@ class PropertyPropertyGeneratorStep implements PropertyGeneratorStepInterface
     protected function resolveOAType(string $type): string
     {
         return match ($type) {
-            'string', 'DateTime', 'DateTimeImmutable' => 'string',
+            'string', 'DateTime', 'DateTimeImmutable', 'DateTimeInterface' => 'string',
             'int' => 'integer',
             'float' => 'number',
             'bool' => 'boolean',
             'array', 'ArrayObject' => 'array',
             default => 'object',
         };
-    }
-
-    /**
-     * @param string $type
-     *
-     * @return string
-     */
-    function resolveTransferType(string $type): string
-    {
-        $parts = explode('\\', $type);
-        $shortType = end($parts);
-
-        return str_replace('Transfer', '', $shortType);
     }
 }

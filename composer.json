@@ -3,7 +3,7 @@
   "type": "symfony-bundle",
   "description": "generates transfers from xml",
   "keywords": ["transfer", "dto", "generator"],
-  "readme": "/README.md",
+  "readme": "README.md",
   "license": "MIT",
   "authors": [
     {
@@ -22,22 +22,29 @@
   },
   "require": {
     "php": ">=8.3",
+    "ext-dom": "*",
+    "ext-libxml": "*",
     "ext-simplexml": "*",
     "nette/php-generator": "^4.2",
-    "symfony/config": ">=7.4",
-    "symfony/console": ">=7.4",
-    "symfony/dependency-injection": ">=7.4",
-    "symfony/filesystem": ">=7.4",
-    "symfony/finder": ">=7.4",
-    "symfony/framework-bundle": ">=7.4"
+    "symfony/config": "^7.4 || ^8.0",
+    "symfony/console": "^7.4 || ^8.0",
+    "symfony/dependency-injection": "^7.4 || ^8.0",
+    "symfony/finder": "^7.4 || ^8.0",
+    "symfony/framework-bundle": "^7.4 || ^8.0",
+    "symfony/http-kernel": "^7.4 || ^8.0"
   },
   "require-dev": {
+    "nelmio/api-doc-bundle": "^5.8.3",
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^12.1",
-    "nelmio/api-doc-bundle": "^v5.8.3"
+    "zircote/swagger-php": "^5.1 || ^6.0"
   },
   "suggest": {
-    "nelmio/api-doc-bundle": "For API Documentation"
+    "nelmio/api-doc-bundle": "Adds OpenAPI attributes and model names for transfers marked with api=\"true\""
+  },
+  "scripts": {
+    "phpstan": "phpstan analyse --memory-limit=1G",
+    "test": "phpunit"
   },
   "config": {
     "sort-packages": true

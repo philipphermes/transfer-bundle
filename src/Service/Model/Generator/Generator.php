@@ -6,21 +6,43 @@ namespace PhilippHermes\TransferBundle\Service\Model\Generator;
 
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
+use PhilippHermes\TransferBundle\Service\Model\Generator\ClassGeneratorSteps\ClassGeneratorStepInterface;
 use PhilippHermes\TransferBundle\Service\Model\Generator\PropertyGeneratorSteps\PropertyGeneratorStepInterface;
 use PhilippHermes\TransferBundle\Service\Model\Type\PropertyTypeMapper;
 use PhilippHermes\TransferBundle\Transfer\GeneratorConfigTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferCollectionTransfer;
 use PhilippHermes\TransferBundle\Transfer\TransferTransfer;
+use RuntimeException;
 
 class Generator implements GeneratorInterface
 {
+    public const string FILE_HEADER = 'This file is auto-generated.';
+
     /**
      * @param array<PropertyGeneratorStepInterface> $propertyGeneratorSteps
+     * @param array<ClassGeneratorStepInterface> $classGeneratorSteps
      */
     public function __construct(
         protected readonly array $propertyGeneratorSteps,
+        protected readonly array $classGeneratorSteps = [],
     )
     {
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function render(
+        GeneratorConfigTransfer $generatorConfigTransfer,
+        TransferCollectionTransfer $transferCollectionTransfer,
+    ): array {
+        $files = [];
+        foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
+            $path = $generatorConfigTransfer->getOutputDirectory() . '/' . $transfer->getName() . 'Transfer.php';
+            $files[$path] = $this->renderTransfer($generatorConfigTransfer, $transfer);
+        }
+
+        return $files;
     }
 
     /**
@@ -30,28 +52,63 @@ class Generator implements GeneratorInterface
         GeneratorConfigTransfer $generatorConfigTransfer,
         TransferCollectionTransfer $transferCollectionTransfer,
         callable $progressCallback,
-    ): void {
-        foreach ($transferCollectionTransfer->getTransfers() as $transfer) {
-            $this->generateTransfer($generatorConfigTransfer, $transfer);
+    ): array {
+        $outputDirectory = $generatorConfigTransfer->getOutputDirectory();
+        $files = $this->render($generatorConfigTransfer, $transferCollectionTransfer);
+
+        if (!is_dir($outputDirectory) && !@mkdir($outputDirectory, 0775, true) && !is_dir($outputDirectory)) {
+            throw new RuntimeException(sprintf("Could not create output directory '%s': %s", $outputDirectory, $this->getLastErrorMessage()));
+        }
+
+        foreach ($files as $path => $content) {
+            if (!$this->isUpToDate($path, $content) && @file_put_contents($path, $content) === false) {
+                throw new RuntimeException(sprintf("Could not write '%s': %s", $path, $this->getLastErrorMessage()));
+            }
+
             $progressCallback();
         }
+
+        return array_keys($files);
+    }
+
+    /**
+     * Unchanged files are not rewritten, so their mtime stays stable.
+     *
+     * @param string $path
+     * @param string $content
+     *
+     * @return bool
+     */
+    protected function isUpToDate(string $path, string $content): bool
+    {
+        return is_file($path) && @file_get_contents($path) === $content;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getLastErrorMessage(): string
+    {
+        return error_get_last()['message'] ?? 'unknown error';
     }
 
     /**
      * @param GeneratorConfigTransfer $generatorConfig
      * @param TransferTransfer $transfer
-     * @return void
+     *
+     * @return string
      */
-    protected function generateTransfer(GeneratorConfigTransfer $generatorConfig, TransferTransfer $transfer)
+    protected function renderTransfer(GeneratorConfigTransfer $generatorConfig, TransferTransfer $transfer): string
     {
         $file = new PhpFile();
         $file->setStrictTypes();
-        $file->addComment('This file is auto-generated.');
+        $file->addComment(self::FILE_HEADER);
 
+        $className = $transfer->getName() . 'Transfer';
         $namespace = $file->addNamespace($generatorConfig->getNamespace());
-        $this->generateUses($transfer, $namespace);
+        $this->generateUses($transfer, $namespace, $className);
 
-        $class = $namespace->addClass($transfer->getName() . 'Transfer');
+        $class = $namespace->addClass($className);
 
         if ($transfer->isApi()) {
             $alias = $transfer->getApiAlias() ?? $transfer->getName();
@@ -64,32 +121,60 @@ class Generator implements GeneratorInterface
             }
         }
 
-        if (!is_dir($generatorConfig->getOutputDirectory())) {
-            mkdir($generatorConfig->getOutputDirectory(), 0777, true);
+        foreach ($this->classGeneratorSteps as $classGeneratorStep) {
+            $classGeneratorStep->generate($transfer, $class);
         }
 
-        file_put_contents($generatorConfig->getOutputDirectory() . '/' . $transfer->getName() . 'Transfer.php', (string)$file);
+        return (string)$file;
     }
 
     /**
+     * Imports all referenced classes. Transfers live in the generated namespace and need no import.
+     *
      * @param TransferTransfer $transfer
      * @param PhpNamespace $namespace
+     * @param string $className
+     *
      * @return void
      */
-    protected function generateUses(TransferTransfer $transfer, PhpNamespace $namespace): void
+    protected function generateUses(TransferTransfer $transfer, PhpNamespace $namespace, string $className): void
     {
         foreach ($transfer->getProperties() as $propertyTransfer) {
-            if (!in_array($propertyTransfer->getType(), PropertyTypeMapper::PHP_TYPES, true) && !str_contains($propertyTransfer->getType(), 'Transfer')) {
-                $namespace->addUse($propertyTransfer->getType());
+            if (!$propertyTransfer->isTransfer()) {
+                $this->addUse($namespace, $propertyTransfer->getType(), $className);
             }
 
-            if ($propertyTransfer->getSingularType() && !in_array($propertyTransfer->getSingularType(), PropertyTypeMapper::PHP_TYPES, true) && !str_contains($propertyTransfer->getSingularType(), 'Transfer')) {
-                $namespace->addUse($propertyTransfer->getSingularType());
+            if ($propertyTransfer->getSingularType() && !$propertyTransfer->isSingularTransfer()) {
+                $this->addUse($namespace, $propertyTransfer->getSingularType(), $className);
             }
         }
 
         if ($transfer->isApi()) {
             $namespace->addUse('OpenApi\Attributes', 'OA');
         }
+    }
+
+    /**
+     * @param PhpNamespace $namespace
+     * @param string $type
+     * @param string $className
+     *
+     * @return void
+     */
+    protected function addUse(PhpNamespace $namespace, string $type, string $className): void
+    {
+        if (in_array($type, PropertyTypeMapper::PHP_TYPES, true)) {
+            return;
+        }
+
+        $parts = explode('\\', $type);
+        $shortName = end($parts);
+        $uses = $namespace->getUses();
+
+        if ($shortName === $className || (isset($uses[$shortName]) && $uses[$shortName] !== $type)) {
+            return;
+        }
+
+        $namespace->addUse($type);
     }
 }
