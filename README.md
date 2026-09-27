@@ -15,6 +15,10 @@ A Symfony bundle for generating type-safe transfer objects (DTOs) from XML schem
 - [Usage](#usage)
   - [Defining Transfers](#defining-transfers)
   - [Property Attributes](#property-attributes)
+  - [Types](#types)
+    - [Enums](#enums)
+  - [Schema Validation](#schema-validation)
+  - [Generated Methods](#generated-methods)
   - [Generating Transfers](#generating-transfers)
 - [OpenAPI Integration](#openapi-integration)
 - [Development](#development)
@@ -133,6 +137,47 @@ accessors must not collide (method names are case-insensitive, so `foo` and `Foo
 | `X[]` of a transfer or class, e.g. `Address[]` | `ArrayObject` |
 
 Any other type is reported as an error.
+
+#### Enums
+
+Enums are not generated. Write the enum yourself and use its fully qualified name as the `type`. It must be
+autoloadable when `transfer:generate` runs, otherwise it is reported as an unknown type.
+
+```php
+namespace App\Enum;
+
+enum Status: string
+{
+    case Active = 'active';
+    case Blocked = 'blocked';
+}
+```
+
+```xml
+<transfer name="User">
+    <property name="status" type="App\Enum\Status" isNullable="true"/>
+    <property name="history" type="App\Enum\Status[]" singular="historyEntry"/>
+</transfer>
+```
+
+This generates `getStatus(): ?Status`, `setStatus()` and `hasStatus()`, plus a `Status` collection with
+`getHistory(): ArrayObject` and `addHistoryEntry(Status $historyEntry)`.
+
+Array conversion works as follows (enum instances are accepted as-is in both directions):
+
+| Enum | `toArray()` | `createFromArray()` / `fromArray()` |
+|------|-------------|-------------------------------------|
+| Backed (`enum Status: string`) | the case value, e.g. `'active'` | `Status::from($value)`, throws a `ValueError` for unknown values |
+| Pure (`enum Size`) | the case name, e.g. `'Small'` | the case with that name, throws an `Error` for unknown names |
+
+```php
+$user = UserTransfer::createFromArray([UserTransfer::STATUS => 'active']);
+$user->getStatus();                     // Status::Active
+$user->toArray()[UserTransfer::STATUS]; // 'active'
+```
+
+`default` is not supported for enum properties, so set the initial value in code. For the OpenAPI output of enums see
+[OpenAPI Integration](#openapi-integration).
 
 ### Schema Validation
 
