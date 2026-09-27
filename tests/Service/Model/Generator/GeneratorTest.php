@@ -17,6 +17,7 @@ use PhilippHermes\TransferBundle\Tests\Support\Fixtures\ValueObject;
 use PhilippHermes\TransferBundle\Tests\Support\TempDirTrait;
 use PhilippHermes\TransferBundle\Transfer\PropertyTransfer;
 use PHPUnit\Framework\TestCase;
+use ReflectionClassConstant;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionProperty;
@@ -299,7 +300,7 @@ class GeneratorTest extends TestCase
 
         self::assertSame($expected, $catalog->toArray());
 
-        $copy = $catalogClass::fromArray($expected);
+        $copy = $catalogClass::createFromArray($expected);
 
         self::assertInstanceOf($catalogClass, $copy);
         self::assertSame($expected, $copy->toArray());
@@ -320,12 +321,46 @@ class GeneratorTest extends TestCase
         self::assertNull($empty['main']);
         self::assertSame([], $empty['items']);
 
-        $catalog = $catalogClass::fromArray(['name' => 'Winter', 'unknown' => 1]);
+        $catalog = $catalogClass::createFromArray(['name' => 'Winter', 'unknown' => 1]);
         self::assertSame('Winter', $catalog->getName());
         self::assertFalse($catalog->hasMain());
 
         $main = new ($ns . '\\ItemTransfer')();
-        self::assertSame($main, $catalogClass::fromArray(['main' => $main])->getMain());
+        self::assertSame($main, $catalogClass::createFromArray(['main' => $main])->getMain());
+    }
+
+    public function testPropertyNameConstantsAreGeneratedAndUsedAsArrayKeys(): void
+    {
+        $ns = $this->generateCatalog();
+        $catalogClass = $ns . '\\CatalogTransfer';
+
+        self::assertSame('name', constant($catalogClass . '::NAME'));
+        self::assertSame('createdAt', constant($catalogClass . '::CREATED_AT'));
+        self::assertSame('string', (string)(new ReflectionClassConstant($catalogClass, 'CREATED_AT'))->getType());
+
+        $catalog = $catalogClass::createFromArray([constant($catalogClass . '::NAME') => 'Winter']);
+        self::assertSame('Winter', $catalog->toArray()[constant($catalogClass . '::NAME')]);
+
+        $source = $this->generatedFile($this->createConfig(), 'Catalog');
+        self::assertStringContainsString("public const string CREATED_AT = 'createdAt';", $source);
+        self::assertStringContainsString('self::CREATED_AT => ', $source);
+        self::assertStringContainsString('array_key_exists(self::CREATED_AT, $data)', $source);
+    }
+
+    public function testFromArrayPopulatesExistingInstance(): void
+    {
+        $ns = $this->generateCatalog();
+        $catalogClass = $ns . '\\CatalogTransfer';
+
+        $catalog = (new $catalogClass())->setName('Summer')->setNote('keep');
+
+        $result = $catalog->fromArray(['name' => 'Winter', 'items' => [['name' => 'Hat']], 'unknown' => 1]);
+
+        self::assertSame($catalog, $result);
+        self::assertSame('Winter', $catalog->getName());
+        self::assertSame('keep', $catalog->getNote());
+        self::assertInstanceOf($ns . '\\ItemTransfer', $catalog->getItems()[0]);
+        self::assertSame('Hat', $catalog->getItems()[0]->getName());
     }
 
     public function testCloneIsDeep(): void

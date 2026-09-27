@@ -17,32 +17,40 @@ class FromArrayClassGeneratorStep extends AbstractClassGeneratorStep
      */
     public function generate(TransferTransfer $transferTransfer, ClassType $class): void
     {
+        $factory = $class->addMethod('createFromArray');
+        $factory->setPublic();
+        $factory->setStatic();
+        $factory->setReturnType('self');
+        $factory->addParameter('data')->setType('array');
+        $factory->addComment('Creates a transfer from an array as returned by toArray(). Missing keys are left unset, unknown keys are ignored.');
+        $factory->addComment('');
+        $factory->addComment('@param array<string, mixed> $data');
+        $factory->addComment('');
+        $factory->addComment('@return self');
+        $factory->setBody('return (new self())->fromArray($data);');
+
         $method = $class->addMethod('fromArray');
         $method->setPublic();
-        $method->setStatic();
         $method->setReturnType('self');
         $method->addParameter('data')->setType('array');
-        $method->addComment('Creates a transfer from an array as returned by toArray(). Missing keys are left unset, unknown keys are ignored.');
+        $method->addComment('Sets the properties from an array as returned by toArray(). Missing keys leave the current value untouched, unknown keys are ignored.');
         $method->addComment('');
         $method->addComment('@param array<string, mixed> $data');
         $method->addComment('');
         $method->addComment('@return self');
 
-        $method->addBody('$transfer = new self();');
-
         foreach ($transferTransfer->getProperties() as $property) {
-            $method->addBody('');
-            $method->addBody(sprintf("if (array_key_exists('%s', \$data)) {", $property->getName()));
+            $method->addBody(sprintf('if (array_key_exists(self::%s, $data)) {', $property->getConstantName()));
             $method->addBody(sprintf(
-                "\t\$transfer->set%s(%s);",
+                "\t\$this->set%s(%s);",
                 ucfirst($property->getName()),
-                $this->resolveValue($property, sprintf("\$data['%s']", $property->getName())),
+                $this->resolveValue($property, sprintf('$data[self::%s]', $property->getConstantName())),
             ));
             $method->addBody('}');
+            $method->addBody('');
         }
 
-        $method->addBody('');
-        $method->addBody('return $transfer;');
+        $method->addBody('return $this;');
     }
 
     /**
@@ -81,7 +89,7 @@ class FromArrayClassGeneratorStep extends AbstractClassGeneratorStep
         $className = $this->className($type);
 
         return match (true) {
-            $isTransfer => sprintf('is_array(%1$s) ? %2$s::fromArray(%1$s) : %1$s', $value, $className),
+            $isTransfer => sprintf('is_array(%1$s) ? %2$s::createFromArray(%1$s) : %1$s', $value, $className),
             $type === DateTime::class => sprintf('is_string(%1$s) ? new %2$s(%1$s) : %1$s', $value, $this->className(DateTime::class)),
             $this->isDateTime($type) && is_a(DateTimeImmutable::class, $type, true)
                 => sprintf('is_string(%1$s) ? new %2$s(%1$s) : %1$s', $value, $this->className(DateTimeImmutable::class)),

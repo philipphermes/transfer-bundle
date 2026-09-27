@@ -145,18 +145,26 @@ For every property the generator creates `getX()`, `setX()` and `hasX()` (`true`
 null). `[]` properties additionally get `addX()`. Getters of `[]` properties always return a collection (an empty
 one if unset or set to `null`).
 
+Each property also gets a public constant holding its name in `UPPER_SNAKE_CASE` (e.g. `public const string CREATED_AT = 'createdAt';`).
+`toArray()` and `fromArray()` use them as array keys, so use them as well instead of string literals (`$data[UserTransfer::EMAIL]`).
+Properties whose constant names collide (e.g. `fooBar` and `foo_bar`, or `apiAlias` in an `api="true"` transfer) are reported as errors.
+
 Every transfer also gets:
 
 | Method | Description |
 |--------|-------------|
 | `toArray(): array` | Converts the transfer recursively: nested transfers become arrays, collections plain arrays, dates `DATE_ATOM` strings and enums their value (backed) or name. Every property is present, unset ones are `null`. |
-| `static fromArray(array $data): self` | The reverse of `toArray()`. Missing keys stay unset, unknown keys are ignored, already converted values (e.g. a transfer object) are accepted as well. |
+| `static createFromArray(array $data): self` | The reverse of `toArray()`. Missing keys stay unset, unknown keys are ignored, already converted values (e.g. a transfer object) are accepted as well. |
+| `fromArray(array $data): self` | Same conversion as `createFromArray()`, but on an existing instance: only the keys present are set, all other properties keep their value. Returns `$this`. |
 | `__clone()` | Makes `clone` deep for nested transfers, `ArrayObject` collections and `DateTime` values, so a clone never shares state with the original. Only generated when needed. |
 
 ```php
-$user = UserTransfer::fromArray(['email' => 'jane@example.com', 'addresses' => [['street' => 'Main St']]]);
+$user = UserTransfer::createFromArray(['email' => 'jane@example.com', 'addresses' => [['street' => 'Main St']]]);
 $user->getAddresses()[0]; // AddressTransfer
 $user->toArray();         // ['email' => 'jane@example.com', 'password' => null, 'addresses' => [['street' => 'Main St']], 'roles' => []]
+
+$user->fromArray([UserTransfer::EMAIL => 'john@example.com']); // only the email changes
+$user->toArray()[UserTransfer::EMAIL];                         // 'john@example.com'
 ```
 
 ### Generating Transfers

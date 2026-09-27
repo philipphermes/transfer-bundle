@@ -214,6 +214,16 @@ class PropertyTransfer
     }
 
     /**
+     * Name of the generated constant holding the property name: `createdAt` → `CREATED_AT`.
+     *
+     * @return string
+     */
+    public function getConstantName(): string
+    {
+        return strtoupper((string)preg_replace(['/([A-Z]+)([A-Z][a-z])/', '/([a-z\d])([A-Z])/'], '$1_$2', $this->name));
+    }
+
+    /**
      * Whether the property is declared as a list (`X[]`).
      *
      * @return bool
