@@ -12,23 +12,30 @@ permissions:
 jobs:
   phpstan:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.3', '8.4', '8.5' ]
     steps:
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
-      - uses: actions/checkout@v3
+          php-version: ${{ matrix.php }}
+      - uses: actions/checkout@v4
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-${{ hashFiles('composer.json') }}
           restore-keys: |
-            ${{ runner.os }}-php-
+            ${{ runner.os }}-php-${{ matrix.php }}-
 
       - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        run: composer update -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: PHPStan
         run: vendor/bin/phpstan analyse --memory-limit=1G
@@ -36,31 +43,48 @@ jobs:
   test:
     needs: [phpstan]
     runs-on: ubuntu-latest
+    name: test (PHP ${{ matrix.php }}${{ matrix.dependencies == 'lowest' && ', lowest' || '' }})
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.3', '8.4', '8.5' ]
+        dependencies: [ 'highest' ]
+        include:
+          - php: '8.3'
+            dependencies: 'lowest'
     steps:
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
-          coverage: xdebug
-      - uses: actions/checkout@v3
+          php-version: ${{ matrix.php }}
+          coverage: ${{ matrix.php == '8.5' && matrix.dependencies == 'highest' && 'xdebug' || 'none' }}
+      - uses: actions/checkout@v4
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-${{ matrix.dependencies }}-${{ hashFiles('composer.json') }}
           restore-keys: |
-            ${{ runner.os }}-php-
+            ${{ runner.os }}-php-${{ matrix.php }}-${{ matrix.dependencies }}-
 
       - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        run: composer update -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist ${{ matrix.dependencies == 'lowest' && '--prefer-lowest --prefer-stable' || '' }}
 
       - name: PHPUnit
+        if: ${{ !(matrix.php == '8.5' && matrix.dependencies == 'highest') }}
+        run: vendor/bin/phpunit
+
+      - name: PHPUnit with coverage
+        if: ${{ matrix.php == '8.5' && matrix.dependencies == 'highest' }}
         run: vendor/bin/phpunit --coverage-html coverage-report
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && matrix.php == '8.5' && matrix.dependencies == 'highest' }}
         with:
           name: coverage-report
           path: coverage-report/
