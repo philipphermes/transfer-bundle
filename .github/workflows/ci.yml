@@ -83,7 +83,7 @@ jobs:
         run: vendor/bin/phpunit --coverage-html coverage-report
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ always() && matrix.php == '8.5' && matrix.dependencies == 'highest' }}
         with:
           name: coverage-report
