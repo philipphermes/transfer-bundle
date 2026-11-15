@@ -15,6 +15,10 @@ A Symfony bundle for generating type-safe transfer objects (DTOs) from XML schem
 - [Usage](#usage)
   - [Defining Transfers](#defining-transfers)
   - [Property Attributes](#property-attributes)
+  - [Types](#types)
+    - [Enums](#enums)
+  - [Schema Validation](#schema-validation)
+  - [Generated Methods](#generated-methods)
   - [Generating Transfers](#generating-transfers)
 - [OpenAPI Integration](#openapi-integration)
 - [Development](#development)
@@ -102,19 +106,111 @@ Create XML schema files in your configured schema directories (default: `transfe
 ```
 
 **Key features:**
-- Multiple XML files are supported and will be merged
-- Transfers with the same name across files are combined
-- First definition of a property takes precedence
+- Multiple XML files are supported and will be merged (files are read in sorted path order)
+- Transfers with the same name across files are combined; `api="true"` in any definition makes it an API transfer
+- First definition of a property takes precedence; a later definition with a different type produces a warning
 
 ### Property Attributes
 
 | Attribute | Required | Description |
 |-----------|----------|-------------|
 | `name` | Yes | Property name |
-| `type` | Yes | PHP type (`string`, `int`, `bool`, `float`, `array`, `Transfer`, `Transfer[]`) |
+| `type` | Yes | Property type, see [Types](#types) |
 | `description` | No | Property description (used in OpenAPI docs) |
-| `singular` | No | Singular name for array properties (enables `addX()` method) |
-| `isNullable` | No | Whether the property can be null (`true`/`false`) |
+| `singular` | No | Singular name used for the `addX()` method of `[]` properties (default: the property name) |
+| `isNullable` | No | Whether the property can be null (`true`/`false`/`1`/`0`) |
+| `default` | No | Initial value for `string`, `int`, `float` and `bool` properties, converted to the property type |
+| `example` | No | Example value for the OpenAPI docs |
+| `deprecated` | No | Marks the property and its accessors `@deprecated` (and `deprecated` in the OpenAPI docs) |
+
+Names of transfers, properties and `singular` must be valid PHP identifiers, and the generated
+accessors must not collide (method names are case-insensitive, so `foo` and `Foo` can't coexist).
+
+### Types
+
+| Type | Result |
+|------|--------|
+| `string`, `int`, `float`, `bool`, `array`, `object`, `mixed` | used as-is |
+| Name of a defined transfer, e.g. `Address` | `AddressTransfer` from the generated namespace |
+| Existing class, interface or enum, e.g. `DateTime`, `App\Enum\Status` | used as fully qualified name |
+| `X[]` of a PHP type, e.g. `string[]` | `array` |
+| `X[]` of a transfer or class, e.g. `Address[]` | `ArrayObject` |
+
+Any other type is reported as an error.
+
+#### Enums
+
+Enums are not generated. Write the enum yourself and use its fully qualified name as the `type`. It must be
+autoloadable when `transfer:generate` runs, otherwise it is reported as an unknown type.
+
+```php
+namespace App\Enum;
+
+enum Status: string
+{
+    case Active = 'active';
+    case Blocked = 'blocked';
+}
+```
+
+```xml
+<transfer name="User">
+    <property name="status" type="App\Enum\Status" isNullable="true"/>
+    <property name="history" type="App\Enum\Status[]" singular="historyEntry"/>
+</transfer>
+```
+
+This generates `getStatus(): ?Status`, `setStatus()` and `hasStatus()`, plus a `Status` collection with
+`getHistory(): ArrayObject` and `addHistoryEntry(Status $historyEntry)`.
+
+Array conversion works as follows (enum instances are accepted as-is in both directions):
+
+| Enum | `toArray()` | `createFromArray()` / `fromArray()` |
+|------|-------------|-------------------------------------|
+| Backed (`enum Status: string`) | the case value, e.g. `'active'` | `Status::from($value)`, throws a `ValueError` for unknown values |
+| Pure (`enum Size`) | the case name, e.g. `'Small'` | the case with that name, throws an `Error` for unknown names |
+
+```php
+$user = UserTransfer::createFromArray([UserTransfer::STATUS => 'active']);
+$user->getStatus();                     // Status::Active
+$user->toArray()[UserTransfer::STATUS]; // 'active'
+```
+
+`default` is not supported for enum properties, so set the initial value in code. For the OpenAPI output of enums see
+[OpenAPI Integration](#openapi-integration).
+
+### Schema Validation
+
+Every file is validated against `transfer.xsd`. Violations such as a misspelled attribute (`isNulable="true"`) are
+reported as warnings with file and line, parsing continues as before.
+
+### Generated Methods
+
+For every property the generator creates `getX()`, `setX()` and `hasX()` (`true` if the property is set and not
+null). `[]` properties additionally get `addX()`. Getters of `[]` properties always return a collection (an empty
+one if unset or set to `null`).
+
+Each property also gets a public constant holding its name in `UPPER_SNAKE_CASE` (e.g. `public const string CREATED_AT = 'createdAt';`).
+`toArray()` and `fromArray()` use them as array keys, so use them as well instead of string literals (`$data[UserTransfer::EMAIL]`).
+Properties whose constant names collide (e.g. `fooBar` and `foo_bar`, or `apiAlias` in an `api="true"` transfer) are reported as errors.
+
+Every transfer also gets:
+
+| Method | Description |
+|--------|-------------|
+| `toArray(): array` | Converts the transfer recursively: nested transfers become arrays, collections plain arrays, dates `DATE_ATOM` strings and enums their value (backed) or name. Every property is present, unset ones are `null`. |
+| `static createFromArray(array $data): self` | The reverse of `toArray()`. Missing keys stay unset, unknown keys are ignored, already converted values (e.g. a transfer object) are accepted as well. |
+| `fromArray(array $data): self` | Same conversion as `createFromArray()`, but on an existing instance: only the keys present are set, all other properties keep their value. Returns `$this`. |
+| `__clone()` | Makes `clone` deep for nested transfers, `ArrayObject` collections and `DateTime` values, so a clone never shares state with the original. Only generated when needed. |
+
+```php
+$user = UserTransfer::createFromArray(['email' => 'jane@example.com', 'addresses' => [['street' => 'Main St']]]);
+$user->getAddresses()[0]; // AddressTransfer
+$user->toArray();         // ['email' => 'jane@example.com', 'password' => null, 'addresses' => [['street' => 'Main St']], 'roles' => []]
+
+$user->fromArray([UserTransfer::EMAIL => 'john@example.com']); // only the email changes
+$user->toArray()[UserTransfer::EMAIL];                         // 'john@example.com'
+```
 
 ### Generating Transfers
 
@@ -125,7 +221,20 @@ php bin/console transfer:generate
 ```
 
 Options:
-- `--clean-disable` - Skip cleaning the output directory before generation
+- `--clean-disable` - Keep stale transfers in the output directory
+- `--check` - Don't write anything, only check whether the generated transfers are up to date. Lists new, changed and
+  stale files and exits with a non-zero code if there are any, e.g. for CI:
+
+```shell
+php bin/console transfer:generate --check
+```
+
+Files whose content didn't change are not rewritten, so their modification time stays the same.
+
+After a successful generation, generated transfers that no longer exist in the schemas are removed from the output
+directory. Only top-level files carrying the `This file is auto-generated.` header are removed. If parsing fails, the
+command prints the errors, exits with a non-zero code and doesn't touch the output directory. Warnings (e.g. a schema
+directory that matches nothing) are printed but don't fail the command.
 
 ---
 
@@ -160,7 +269,7 @@ Use in your controllers with NelmioApiDocBundle:
 ```php
 use App\Generated\Transfers\UserTransfer;
 use App\Generated\Transfers\ErrorTransfer;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 
 class UserApiController extends AbstractController
@@ -183,6 +292,11 @@ class UserApiController extends AbstractController
     }
 }
 ```
+
+Property attributes in the generated `OA\Property`:
+- `description`, `example` and `default` from the XML
+- `nullable: true` for nullable non-collection properties, `deprecated: true` for deprecated ones
+- backed enums get their backing type and `enum` with the case values, pure enums `type: 'string'` with the case names
 
 > [!NOTE]
 > Child transfers do not inherit `api="true"` - you must set it explicitly on each transfer.

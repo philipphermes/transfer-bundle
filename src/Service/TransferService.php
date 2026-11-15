@@ -29,16 +29,32 @@ readonly class TransferService implements TransferServiceInterface
     /**
      * @inheritDoc
      */
-    public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer, callable $progressCallback): void
+    public function render(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer): array
     {
-        $this->transferServiceFactory->createGenerator()->generate($generatorConfigTransfer, $transferCollectionTransfer, $progressCallback);
+        return $this->transferServiceFactory->createGenerator()->render($generatorConfigTransfer, $transferCollectionTransfer);
     }
 
     /**
      * @inheritDoc
      */
-    public function clean(GeneratorConfigTransfer $generatorConfigTransfer): void
+    public function generate(GeneratorConfigTransfer $generatorConfigTransfer, TransferCollectionTransfer $transferCollectionTransfer, callable $progressCallback): array
     {
-        $this->transferServiceFactory->createTransferCleaner()->clean($generatorConfigTransfer);
+        return $this->transferServiceFactory->createGenerator()->generate($generatorConfigTransfer, $transferCollectionTransfer, $progressCallback);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function clean(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): void
+    {
+        $this->transferServiceFactory->createTransferCleaner()->clean($generatorConfigTransfer, $keepFiles);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findStale(GeneratorConfigTransfer $generatorConfigTransfer, array $keepFiles = []): array
+    {
+        return $this->transferServiceFactory->createTransferCleaner()->findStale($generatorConfigTransfer, $keepFiles);
     }
 }

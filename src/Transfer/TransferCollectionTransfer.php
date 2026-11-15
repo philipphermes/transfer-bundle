@@ -19,6 +19,11 @@ class TransferCollectionTransfer
     protected array $errors = [];
 
     /**
+     * @var array<string>
+     */
+    protected array $warnings = [];
+
+    /**
      * @return ArrayObject<array-key, TransferTransfer>
      */
     public function getTransfers(): ArrayObject
@@ -86,6 +91,26 @@ class TransferCollectionTransfer
     public function addError(string $error): self
     {
         $this->errors[] = $error;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
+
+    /**
+     * @param string $warning
+     *
+     * @return self
+     */
+    public function addWarning(string $warning): self
+    {
+        $this->warnings[] = $warning;
 
         return $this;
     }
