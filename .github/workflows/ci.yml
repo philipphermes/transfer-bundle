@@ -20,7 +20,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Get Composer cache directory
         id: composer-cache
@@ -57,7 +57,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: ${{ matrix.php == '8.5' && matrix.dependencies == 'highest' && 'xdebug' || 'none' }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Get Composer cache directory
         id: composer-cache
