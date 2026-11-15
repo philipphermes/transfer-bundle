@@ -3,6 +3,7 @@ updates:
   - package-ecosystem: "composer"
     directory: "/"
     target-branch: "main-renovate"
+    versioning-strategy: "widen"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -25,3 +26,10 @@ updates:
     target-branch: "main-renovate"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "ci"
